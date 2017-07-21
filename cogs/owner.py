@@ -725,7 +725,7 @@ class Owner:
 
     @commands.command()
     @checks.is_owner()
-    async def join(self):
+    async def join_server(self):
         """Shows Red's invite URL"""
         if self.bot.user.bot:
             await self.bot.whisper("Invite URL: " + self.bot.oauth_url)
@@ -734,7 +734,7 @@ class Owner:
 
     @commands.command(pass_context=True, no_pm=True)
     @checks.is_owner()
-    async def leave(self, ctx):
+    async def leave_server(self, ctx):
         """Leaves server"""
         message = ctx.message
 
