@@ -19,17 +19,15 @@ import xml.dom.minidom
 import re           #re.compile() and pattern matching
 import youtube_dl
 
-
-from cogs.utils.chat_formatting import *
+from tinytag import TinyTag as TTag
+from .utils.chat_formatting import *
+from .utils import checks
 from .music_player.downloader import Downloader, music_cache_path, music_local_path
 from .music_player.playlist import Playlist, playlist_path, playlist_local_path #, default_playlist
 from .music_player.song import Song
-from tinytag import TinyTag as TTag
-#from .config import *
-log = logging.getLogger(__name__)
+from .music_player.paths import *
 
-config_path = 'data/music/config.json'
-default_playlist = 'test.xml'
+log = logging.getLogger(__name__)
 
 try:
     if not discord.opus.is_loaded():
@@ -66,9 +64,9 @@ class Music_Player:
     #def autojoin_channel(
 
     """________________Commands Operational________________"""
-    """ Plays/resumes the song from current playlist"""
     @commands.command(pass_context=True)
     async def play(self, ctx): # * = keyword only arg
+        """ Plays/resumes the song from current playlist"""
         server = ctx.message.server
         cur_state = self.states[server.id]
         pl = self.playlists[server.id]
@@ -98,6 +96,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def skip(self, ctx):
+        """ Skips current song """
         server = ctx.message.server
         mp = self.get_mp(server)
         pl = self.playlists[server.id]
@@ -204,6 +203,7 @@ class Music_Player:
         -Autoplay if only one in playlist """
     @commands.command(pass_context=True)
     async def add(self, ctx, song_or_url):
+        """ Add a song to the playlist """
         server = ctx.message.server
         pl = self.playlists[server.id]
 
@@ -244,6 +244,7 @@ class Music_Player:
         - if current playlist is empty, will load it as a new playlist  """
     @commands.command(pass_context=True)
     async def add_p(self, ctx, url):
+        """Adds a url playlist to the playlist """
         server = ctx.message.server
         pl = self.playlists[server.id]
 
@@ -267,7 +268,7 @@ class Music_Player:
             return
 
     @commands.command(pass_context=True)
-    async def remove(self, ctx, index):  #removes a song from playlist
+    async def remove(self, ctx, index):     #removes a song from playlist
         server = ctx.message.server
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
@@ -333,7 +334,8 @@ class Music_Player:
             settings = 'State: ' + self.states[server.id].value + '\t' + settings
             await self.bot.say( "Settings~\n" + box(settings) + '\n' +
                                 "Current Song~\n" + box(cur_song) + '\n' +
-                                "Current Playlist:\t%s\n" % italics(pl.title))
+                                "Current Playlist:\t%s\n" % italics(pl.title),
+                                delete_after=60)
             for pl_section in playlist:
                 await self.bot.say(box(pl_section))
 
@@ -366,49 +368,21 @@ class Music_Player:
         await self.bot.say("Shuffle set to %s!~" % onoff)
 
     @commands.command(pass_context=True)
-    async def save_p(self, ctx, new_pl):       #will build own xml
+    async def save_p(self, ctx, new_pl):       #builds own xml
         author = ctx.message.author
         server = ctx.message.server
         pl = self.playlists[server.id]
+
         pl_saved = pl.save(new_pl, author)
         if pl_saved == 1:
-            await self.bot.say("Already have a playlist with same name!~")
-        else:
-            await self.bot.say("Saved playlist: %s!~" % new_pl)
-
-        """
-        ftypes = r'(xml)$'
-        server_pl_path = playlist_path + "\\" + server.id
-        if self.get_file(new_pl, server_pl_path, ftypes) != None:
-            await self.bot.say("Already have a playlist with same name!~")
-            return
-
-        root = etree.Element('smil')
-        head = etree.SubElement(root, 'head')
-        body = etree.SubElement(root, 'body')
-        seq  = etree.SubElement(body, 'seq')
-
-        head_gen = etree.SubElement(head, 'meta', name="Generator", content="Greedie_Bot v1.0")
-        head_author = etree.SubElement(head, 'author', name=ctx.message.author.name)
-        head_title = etree.SubElement(head, 'title')
-        head_title.text = new_pl        #default title will be same as file name
-
-        for song in pl.list:            #for every song in playlist, make new sub element
-            seq_media = etree.SubElement(seq, 'media', src=song.path)
-            #print(seq_media)
-
-        pl_path_full = playlist_path + '\\' + server.id + '\\' + new_pl + '.xml'
-        f = open(pl_path_full, 'wb')      #b=binary mode, read docs, has conflict depending on encoding
-        #hierarchy = etree.ElementTree(root)
-        #hierarchy.write(f, encoding='utf-8', xml_declaration=True)
-
-        #xml_str = xml.dom.minidom.parseString(etree.tostring(root)).toprettyxml()
-        xml_str = etree.tostring(root)                          #print element type to a string
-        xml_str_parsed = xml.dom.minidom.parseString(xml_str)   #reparse with minidom
-        xml_str_pretty = xml_str_parsed.toprettyxml()           #make it pretty
-        f.write(xml_str_pretty.encode('utf-8'))                 #convert it back to xml
-        f.close()
-    """
+            await self.bot.say("Already have a playlist with same name! Overwrite? Y/N~")
+            reply = await self.bot.wait_for_message(author=author, channel=ctx.message.channel, check=self.check_reply)
+            if reply.content == 'yes':
+                pl_saved = pl.save(new_pl, author, overwrite=1)
+            elif reply.content == 'no':   #reply=0
+                await self.bot.say('Playlist not saved!~')
+                return
+        await self.bot.say("Saved playlist: %s!~" % new_pl)
 
     @commands.command(pass_context=True)
     async def load_p(self, ctx, pl):
@@ -434,8 +408,8 @@ class Music_Player:
 
 
     """________________Commands Server________________"""
-
     @commands.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
     async def join_vc(self, ctx):
         """ Joins voice channel """
         author = ctx.message.author     #ctx = context
@@ -451,6 +425,7 @@ class Music_Player:
         await self.bot.join_voice_channel(channel)          #joins owners voice channel only
 
     @commands.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
     async def leave_vc(self, ctx):
         server = ctx.message.server
 
@@ -459,6 +434,7 @@ class Music_Player:
             await voice_client.disconnect()
 
     @commands.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
     async def rejoin(self, ctx):
         #TODO make bot rejoin its own vc
         server = ctx.message.server
@@ -620,7 +596,11 @@ class Music_Player:
             return file_path_full
         return None
 
-
+    def check_reply(self, reply):   #reply is a Message class,cant return bool???
+        if reply.content.lower() == 'yes' or reply.content.lower() == 'y':
+            return 'yes'
+        elif reply.content.lower() == 'no' or reply.content.lower() == 'n':
+            return 'no'
     """________________Management________________"""
     #basically asynchronously polls music player to see if its playing or not
     async def playlist_scheduler(self):
@@ -783,13 +763,7 @@ def setup(bot):
     #Music Player initializations after it has connected to servers
     music_player.init_playlists()
     music_player.init_states()
-    print('Starting Music Player with codec: ' + codec)
 
-    #bot.add_listener(music_player.voice_state_update, 'on_voice_state_update')
     bot.loop.create_task(music_player.playlist_scheduler())
-    """
-    bot.loop.create_task(n.disconnect_timer())
-    bot.loop.create_task(n.reload_monitor())
-    bot.loop.create_task(n.cache_scheduler())
-    """
+    print('Starting Music Player with codec: ' + codec)
 #fn setup

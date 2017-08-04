@@ -9,8 +9,7 @@ import urllib.request
 import youtube_dl
 #from config import *
 
-music_cache_path = 'data\music\cache'
-music_local_path = 'D:\Music'
+from .paths import music_cache_path, music_local_path
 
 class Logger(object):
     def debug(self, msg):

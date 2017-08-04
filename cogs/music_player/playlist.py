@@ -9,16 +9,12 @@ import xml.etree.ElementTree as etree
 import xml.dom.minidom
 import re           #re.compile() and pattern matching
 import youtube_dl
-from tinytag import TinyTag as TTag
 
+from tinytag import TinyTag as TTag
 from .downloader import Downloader, music_cache_path, music_local_path
 from .song import Song
-from tinytag import TinyTag as TTag
-#from downloader import music_local_path
+from .paths import playlist_path, playlist_local_path, MAX_CHAR_LIMIT
 
-playlist_path = 'data\music\playlists'
-playlist_local_path = 'D:\Music\Playlists'
-MAX_CHAR_LIMIT = 1900
 
 class Playlist:
     def __init__(self, server_id, repeat, shuffle):
@@ -128,10 +124,10 @@ class Playlist:
             self.order = sorted(
                 self.order, key=lambda x: (x is None or x is 0, x))  #0 or none put to the end   htts://stackoverflow.com/questions/18411560
 
-    def save(self, playlist_name, author):
+    def save(self, playlist_name, author, overwrite=0):
         ftypes = r'(xml)$'
         server_pl_path = playlist_path + "\\" + self.server_id
-        if self.get_file(playlist_name+'.xml', server_pl_path) != None:
+        if self.get_file(playlist_name+'.xml', server_pl_path) != None and overwrite==0:
             return 1
 
         root = etree.Element('smil')
