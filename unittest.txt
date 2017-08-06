@@ -2,8 +2,12 @@
 `add https://www.youtube.com/watch?v=Iets6iLm3QY
 `add https://soundcloud.com/else-official/else-zephyr
 
-`add_p https://www.youtube.com/playlist?list=PLDhaKHHWysX6MWeLFLqgsrhkq37SUCR8J
-`add_p https://www.youtube.com/playlist?list=PLvlw_ICcAI4eXKXNlcLacuXmPe5ydUl4N
+https://www.youtube.com/playlist?list=PLDhaKHHWysX6MWeLFLqgsrhkq37SUCR8J
+https://www.youtube.com/playlist?list=PLvlw_ICcAI4eXKXNlcLacuXmPe5ydUl4N
 https://soundcloud.com/samurai_groove/sets/untouchables-v1
+https://newretrowave.bandcamp.com/album/magnatron-20
+
 copyright
 `add https://www.youtube.com/watch?v=sDJuFHZDo-A
+
+"data\music\cache\Thomas Vent - Listen To Your Heart-youtube-BLyVf1qeWR8.m4a"

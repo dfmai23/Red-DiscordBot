@@ -54,10 +54,12 @@ class State(enum.Enum):
 class Music_Player:
     def __init__(self, bot, codec):
         self.bot = bot              #class discord.Client
-        self.settings = json.load(open(config_path, 'r'))
-        self.server_settings = self.settings["SERVER_SETTINGS"] #server specfic settings
+        self.settings = {}
+        self.server_settings = {} #server specfic settings
         self.playlists = {} #music queues for each server
         self.states = {}    #status of each music player, ie. playing/paused
+        self.games = {}
+        self.game = None
         self.downloader = Downloader()
         self.bot.loop.create_task(self.init_autojoin())   #ensure_future wont block execution (fn always return immediately)
     #joins voice channel by channel id
@@ -65,8 +67,9 @@ class Music_Player:
 
     """________________Commands Operational________________"""
     @commands.command(pass_context=True)
-    async def play(self, ctx): # * = keyword only arg
+    async def play(self, ctx, *args): # * = keyword only arg
         """ Plays/resumes the song from current playlist"""
+        if args: await self.bot.say('Use "add" command!'); return
         server = ctx.message.server
         cur_state = self.states[server.id]
         pl = self.playlists[server.id]
@@ -104,13 +107,13 @@ class Music_Player:
 
         #get next song in playlist
         next_song = await self.get_nxt_song(server)
-        await self.check_nextnext_song(server)
         if next_song == None:  #reached end of playlist
             await self.bot.say("Reached end of Playlist!~")
             return
         nxt_song_display = next_song.display()
-        await self.bot.say('Playing next song!~\n' + box(nxt_song_display))
         self.mp_start(server, next_song)
+        await self.bot.say('Playing next song!~\n' + box(nxt_song_display))
+        await self.check_nextnext_song(server)
 
     @commands.command(pass_context=True)
     async def prev(self, ctx):
@@ -140,6 +143,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def volume(self, ctx, *, decimal):    #keyword decimal to display on help
+        """Set volume between 0.0 and 1.0"""
         server = ctx.message.server
 
         val = float(decimal)
@@ -159,21 +163,20 @@ class Music_Player:
         self.server_settings[server.id]["VOLUME"] = val
         await self.bot.say("Music player volume set to:  " + str(val) + '~')
 
+    @commands.command(pass_context=True)
+    async def songinfo(self, ctx):
+        """ Displays current palying song info """
+        server = ctx.message.server
+        pl = self.playlists[server.id]
+        song = pl.now_playing
+        songinfo = song.info()
+        await self.bot.say(box(songinfo))
+
 
     """________________Commands Playlist________________"""
     @commands.command(pass_context=True)
-    async def dl(self, ctx, url):
-        server = ctx.message.server
-        dl = Downloader()
-        info = await dl.extract(self.bot.loop, url, download=False)
-
-        if ('ext' in info['formats'][0]) and (info['formats'][0]['ext'] == 'm4a'):
-            song_path_full = self.bot.loop.create_task(dl.extract_m4a(info))
-        else:
-            info = await dl.extract(self.bot.loop, url)
-
-    @commands.command(pass_context=True)
-    async def inf(self, ctx, url):
+    @checks.mod_or_permissions(administrator=True)
+    async def pinfo(self, ctx, url):
         server = ctx.message.server
         info = await self.downloader.extract(self.bot.loop, url, download=False)
         if info != None:
@@ -197,48 +200,10 @@ class Music_Player:
         else:
             print('Not able to get info')
 
-    """Adds a song to the playlist
-        -Checks if its a url or local song
-        -Will add to playlist
-        -Autoplay if only one in playlist """
     @commands.command(pass_context=True)
     async def add(self, ctx, song_or_url):
-        """ Add a song to the playlist """
-        server = ctx.message.server
-        pl = self.playlists[server.id]
-
-        is_url = re.compile(r'^(?:http|ftp)s?://' # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
-        r'localhost|' #localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
-        r'(?::\d+)?' # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-
-        if is_url.match(song_or_url):   #download or find in cache
-            url = song_or_url
-            info = await self.downloader.extract(self.bot.loop, url)    #get info and download song
-            song_path_full = music_cache_path + '\\' + info['title'] +'-'+ info['extractor'] +'-'+ info['id'] + '.' + info['ext']
-            song = Song(info['title'], info['duration'], song_path_full, info['webpage_url'])
-        else:    #find local file in library
-            name = song_or_url
-            ftype = r'(m4a|mp3|webm)$'  #regular expression, $ = match the end of the string
-            song_path_full = self.find_file(name, music_local_path, ftype)
-            if song_path_full == None:  #song not in lib
-                return 3
-            tags = TTag.get(song_path_full)
-            song = Song(tags.title, tags.duration, song_path_full, None, artist=tags.artist)
-
-        song_added = pl.add(song)
-        if song_added == 3:
-            await self.bot.say('Coudn\'t find song in library!~')
-        elif song_added == 2:
-            await self.bot.say('Song already in playlist!')
-        else:
-            song_display = song.display()
-            await self.bot.say('Added to playlist!~' + box(song_display))
-
-        if len(pl.list) == 1:    #autoplay
-            self.mp_start(server, song)
+        """ Add a song (local or URL) to the playlist """
+        await self.add_song(ctx, song_or_url)
 
     """Adds a url playlist to the playlist
         - if current playlist is empty, will load it as a new playlist  """
@@ -268,12 +233,13 @@ class Music_Player:
             return
 
     @commands.command(pass_context=True)
-    async def remove(self, ctx, index):     #removes a song from playlist
+    @checks.mod_or_permissions(administrator=True)
+    async def remove(self, ctx, name_or_index):     #removes a song from playlist
         server = ctx.message.server
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
 
-        state, song = pl.remove(index)
+        result, song = pl.remove(name_or_index)
         if state == 3:
             await self.bot.say("Playlist index not in range!~")
         elif state == 2:
@@ -284,35 +250,46 @@ class Music_Player:
             mp.stop()
             mp.start(server, pl.cur_i)
         else:
-            await self.bot.say("Removed from playlist!~\n" + box(song.title + ' - ' + song.artist))
-        """
-        i = int(index)
-        if (i+1) > len(pl.list):
-            await self.bot.say("Playlist index not in range!~")
-            return
-
-        song = pl.list.pop(i)
-        if len(pl.list) == 0:
-            mp.stop()
-            pl.cur_i = -1
-            await self.bot.say("Playlist now empty!")
-            return
-        elif i < pl.cur_i:   #removed a song before now playing, have to shift index one back
-            pl.cur_i -= 1
-        elif i == pl.cur_i:    #removed current playing song from playlist
-            mp.stop()
-            pl.cur_i = -1       #mp_start will move it to first song in playlist
-            await self.bot.say("Removed currently playing song! Playing first song~")
-            self.mp_start(server, pl.list[0])
-            return
-
-        if song == None:
-            await self.bot.say("Not in playlist!~")
-            return
-        await self.bot.say("Removed from playlist!~\n" + box(song.title + ' - ' + song.artist))
-        """
+            song_display = song.display()
+            await self.bot.say("Removed from playlist!~\n" + box(song_display))
 
     @commands.command(pass_context=True)
+    async def search(self, ctx, *, searchterm):
+        """Searches a song on youtube and downloads top find """
+        server = ctx.message.server
+        channel = ctx.message.channel
+        pl = self.playlists[server.id]
+
+        info = await self.downloader.extract(self.bot.loop, searchterm, download=False, process=False)
+        if info.get('url', '').startswith('ytsearch'):  # ytdl options allow us to use search strings as input urls
+            info = await self.downloader.extract(self.bot.loop, searchterm, download=False,process=True)
+            if not all(info.get('entries', [])):
+                await self.bot.say('Couldnt find a song!~')
+                return
+            url = info['entries'][0]['webpage_url']    # TODO: handle 'webpage_url' being 'ytsearch:...' or extractor type
+            await self.add_song(ctx, url)
+        else:
+            await self.bot.say('Couldn\'t search!~')
+
+    @commands.command(pass_context=True)
+    async def skip_to(self, ctx, index):
+        server = ctx.message.server
+        pl = self.playlists[server.id]
+        mp = self.get_mp(server)
+
+        i = int(index)
+        if (i+1) > len(pl.list):
+            await self.bot.say('Index out of range!~')
+            return
+
+        song = pl.list[i]
+        self.mp_stop(server)
+        self.mp_start(server, song)
+        song_display = index+'. ' + song.display()
+        await self.bot.say('Jumping to song: ' + box(song_display))
+
+    @commands.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
     async def clear(self, ctx):
         server = ctx.message.server
         mp = self.get_mp(server)
@@ -338,6 +315,23 @@ class Music_Player:
                                 delete_after=60)
             for pl_section in playlist:
                 await self.bot.say(box(pl_section))
+
+    @commands.command(pass_context=True)
+    async def view_p(self, ctx):
+        server = ctx.message.server
+        server_pl_path = playlist_path + '\\' + server.id
+        pl_cached = ''
+        pl_local = ''
+        pattern = r'\.(xml|wpl)$'
+        for root, dirs, files in os.walk(server_pl_path):
+            for name in files:
+                pl_cached += re.split(pattern, name)[0] + '\n'
+        for root, dirs, files in os.walk(playlist_local_path):
+            for name in files:
+                pl_local += re.split(pattern, name)[0] + '\n'
+
+        await self.bot.say('Cached playlists:\n' + box(pl_cached))
+        await self.bot.say('Local playlists:\n' + box(pl_local))
 
     @commands.command(pass_context=True)
     async def repeat(self, ctx, onoff):
@@ -377,9 +371,9 @@ class Music_Player:
         if pl_saved == 1:
             await self.bot.say("Already have a playlist with same name! Overwrite? Y/N~")
             reply = await self.bot.wait_for_message(author=author, channel=ctx.message.channel, check=self.check_reply)
-            if reply.content == 'yes':
-                pl_saved = pl.save(new_pl, author, overwrite=1)
-            elif reply.content == 'no':   #reply=0
+            if reply.content in ['yes', 'y']:
+                pl_saved = pl.save(new_pl, author.name, overwrite=1)
+            elif reply.content in ['no', 'n']:   #reply=0
                 await self.bot.say('Playlist not saved!~')
                 return
         await self.bot.say("Saved playlist: %s!~" % new_pl)
@@ -387,11 +381,11 @@ class Music_Player:
     @commands.command(pass_context=True)
     async def load_p(self, ctx, pl):
         server = ctx.message.server
-        pl_loaded = self.load_pl(server, pl, init=False)
+        pl_loaded = self.load_pl(server, pl)
         if pl_loaded == 1:
             await self.bot.say("Can't find playlist to load!~")
-        else:
-            self.mp_start(server, self.playlists[server.id].list[0])    #autoplay
+            return
+        self.mp_start(server, self.playlists[server.id].list[0])    #autoplay
 
     @commands.command(pass_context=True)
     async def delete_p(self, ctx, pl_name):        #deletes by playlist filename bar ext
@@ -448,13 +442,14 @@ class Music_Player:
     async def stat(self, ctx):
         server = ctx.message.server
         vc = self.bot.voice_client_in(server)
+        channel = vc.channel
         mp = vc.music_player
         pl = self.playlists[server.id]
-
         #print(music_cache_path + '%(extractor)s' + '-' + '%(exts)s')
         #str = music_cache_path + '%(extractor)s' + '-' + '%(exts)s'
 
         print(server.id, server.name)
+        print(channel.id, channel.name)
 
         print("playlist size: " + str(len(pl.list)))
         print("playlist now playing: " + pl.now_playing.title)
@@ -501,6 +496,7 @@ class Music_Player:
             self.playlists[server.id].cur_i = self.playlists[server.id].get_i(audio)   #accounts for skipping and going back
         print('Playing:', audio.path)
         voice_client.music_player.start()
+        #self.bot.loop.create_task(self.set_game(audio))
 
     def mp_stop(self, server):
         music_player = self.get_mp(server)
@@ -511,6 +507,57 @@ class Music_Player:
         voice_client = self.bot.voice_client_in(server)
         music_player = voice_client.music_player
         return music_player
+
+    """Adds a song to the playlist
+        -Checks if its a url or local song
+        -Will add to playlist
+        -Autoplay if only one in playlist """
+    async def add_song(self, ctx, song_or_url):
+        server = ctx.message.server
+        pl = self.playlists[server.id]
+
+        is_url = re.compile(r'^(?:http|ftp)s?://' # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+        r'localhost|' #localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+        r'(?::\d+)?' # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+        if is_url.match(song_or_url):   #download or find in cache
+            url = song_or_url
+            info = await self.downloader.extract(self.bot.loop, url, download=False, process=False)    #get info only
+            if info['extractor_key'] in ['YoutubePlaylist', 'SoundcloudSet', 'BandcampAlbum']:
+                await self.bot.say('Please use "add_p" command for URL playlists!')
+                return
+            info = await self.downloader.extract(self.bot.loop, url)    #get info and download song
+            pattern = r'\<|\>|\:|\"|\/|\\|\||\?|\*'
+            info['title'] = re.sub(pattern, '_', info['title'])
+            print(info['title'])
+            song_path_full = music_cache_path + '\\' + info['title'] +'-'+ info['extractor'] +'-'+ info['id'] + '.' + info['ext']
+            song = Song(info['title'], info['duration'], song_path_full, info['webpage_url'])
+        else:    #find local file in library
+            name = song_or_url
+            ftype = r'(m4a|mp3|webm)$'  #regular expression, $ = match the end of the string
+            song_path_full = self.find_file(name, music_local_path, ftype)
+            if song_path_full == None:  #song not in lib
+                return 3
+            tags = TTag.get(song_path_full)
+            if tags.title == None:
+                pattern = r'\.(mp3|m4a)$'
+                tags.title = os.path.basename(song_path_full).strip(pattern)
+            song = Song(tags.title, tags.duration, song_path_full, None, artist=tags.artist)
+
+        song_added = pl.add(song)
+        if song_added == 3:
+            await self.bot.say('Coudn\'t find song in library!~')
+        elif song_added == 2:
+            await self.bot.say('Song already in playlist!')
+        else:
+            song_display = song.display()
+            await self.bot.say('Added to playlist!~' + box(song_display))
+
+        if len(pl.list) == 1:    #autoplay
+            self.mp_start(server, song)
 
     async def get_nxt_song(self, server):
         pl = self.playlists[server.id]
@@ -544,20 +591,34 @@ class Music_Player:
         if nextnext_song.url != None:
             info = await self.downloader.extract(self.bot.loop, nextnext_song.url)
 
+    async def set_game(self, song):
+        self.game = list(self.bot.servers)[0].me.game
+        status = list(self.bot.servers)[0].me.status
+        game = discord.Game(name=song.title)
+        await self.bot.change_presence(status=status, game=game)
+
+        """
+        if self._old_game is False:
+            self._old_game = list(self.bot.servers)[0].me.game
+        status = list(self.bot.servers)[0].me.status
+        game = discord.Game(name=song.title)
+        await self.bot.change_presence(status=status, game=game)
+        """
+
     """Loads a local/saved playlist
         -will create empty Playlist() class
         -if init is on then will search specifically for "saved_playlist.xml" from data/music
         -else will search for playlist with closest name
         -if init is on will also create server playlist path if not found and load the empty playlist
         -processes the playlist """
-    def load_pl(self, server, playlist_name, init):          #* = forces keyword arg in caller
+    def load_pl(self, server, playlist_name, **kwargs):          #* = forces keyword arg in caller
         server_cfg = self.server_settings[server.id]
         playlist = Playlist(server.id, server_cfg["REPEAT"], server_cfg["SHUFFLE"])   #creat empty playlist
         try:
             mp_stop(server)
         except:
             pass
-        self.playlists[server.id] = playlist.load(playlist_name, init)
+        self.playlists[server.id] = playlist.load(playlist_name, **kwargs)
 
     async def load_url_pl(self, server, info, playlist):     #returns a list of Songs
         url_playlist = []
@@ -629,26 +690,26 @@ class Music_Player:
         pl = self.playlists[server.id]
         try:
             if mp.is_done() and self.states[server.id] != State.STOPPED:    #stopped playing music
+                print(server.id, server.name)
                 next_song = await self.get_nxt_song(server)
-                await self.check_nextnext_song(server)
-                #print('t1')
                 if next_song == None:  #repeat off, end of playlist
                     print('Next song is NoneType')
                     pass
                 else:
                     self.mp_start(server, next_song)
+                await self.check_nextnext_song(server)  #last so next song can play first
         except:
             pass
 
-            """
-            if pl.list[pl.order[pl.cur_i]] == None and self.server_settings[server.id]["REPEAT"] == False:  #reached end of playlist
-                pass
-            else:   #repeat off
-                #print('indexb: ' + str(pl.cur_i+1))
-                next_song = pl.list[pl.order[pl.cur_i]]
-                self.mp_start(server, next_song)
-                #print('playing next song')
-            """
+    async def voice_channel_watcher(self):
+        while self == self.bot.get_cog('Music_Player'):
+            for vc in self.bot.voice_clients:
+                server = vc.server
+                channel = vc.channel
+                if len(channel.voice_members) == 1 and self.states[server.id] != State.STOPPED:
+                    self.mp_stop(server)
+                    print('Channel empty, stopping music:', server.name, channel.name)
+            await asyncio.sleep(5)
 
     def save_config(self):      #save config for current server
         config_file = open(config_path, 'w')
@@ -656,6 +717,17 @@ class Music_Player:
 
 
     """________________Initialization's________________"""
+    def init_settings(self):
+        print('Loading settings')
+        self.settings = json.load(open(config_path, 'r'))
+        self.server_settings = self.settings["SERVER_SETTINGS"]
+
+        for server in self.bot.servers:
+            if not server.id in self.server_settings:   #create new default server settings
+                print(' Server settings for %s %s not found, creating defaults' % (server.id, server.name))
+                self.server_settings[server.id] = server_cfg
+        self.save_config()
+
     """Initializes playlists by:
         -creating empty queues for each server
         -reading saved saved playlist
@@ -668,46 +740,43 @@ class Music_Player:
         print('Loading Playlists')
         playlists = {}      #map
         for server in self.bot.servers:
-            print(server.id, server.name)
+            print(' ', server.id, server.name)
             self.load_pl(server, default_playlist, init=True)
 
     def init_states(self):
         print('Loading default states')
         states = {}
         for server in self.bot.servers:
-            #print(server.id)
             states[server.id] = State.STOPPED
         self.states = states
+
+    def init_games(self):
+        for server in self.bot.servers:
+            self.games[server.id] = None
 
     async def init_autojoin(self):
         print('Autojoining Channels')
         states = []
         if self.settings["AUTOJOIN"] == True:
             for c_id in self.settings["AUTOJOIN_CHANNELS"]:
-                channel = self.bot.get_channel(c_id)
+                channel= self.bot.get_channel(c_id) #channel to join
                 server = channel.server
                 try:
                     await self.bot.join_voice_channel(channel)
-                except:     #already connected to the channel
-                    pass
-                #await self.bot.say('Hi!~')
-                self.mp_start(server, self.playlists[server.id].list[0])    #autoplay
-                self.mp_pause(server)
+                    print('  Joining channel:', server.id, server.name, channel.id, channel.name)
+                    #await self.bot.send_message('Hi!~')
+                except:
+                    print('  Already in channel, skipping:', server.id, server.name, channel.id, channel.name)
+
+                try:    #autoplay
+                    self.mp_start(server, self.playlists[server.id].list[0])
+                    self.mp_pause(server)
+                except:
+                    print('Empty playlist, skipping autoplay')
 #class Music Player
 
 """startup checks"""
 def check_cfg():
-    default_cfg = {"VOLUME": .5,
-                "REPEAT": True,
-                "SHUFFLE": False,
-                "VOTE_RATIO": .5,
-                "VOTES_REQUIRED": 3,
-                "SAVE_PLAYLISTS": True,
-                "AUTOJOIN": True,
-                "AUTOJOIN_CHANNELS": {},
-                "SERVER_SETTINGS": {}
-            }
-
     if not os.path.isfile(config_path):         #check and create config file
         print("Creating default audio config.json")
         config_file = open(config_path, 'w')
@@ -761,9 +830,12 @@ def setup(bot):
     bot.add_cog(music_player)
 
     #Music Player initializations after it has connected to servers
+    music_player.init_settings()
     music_player.init_playlists()
     music_player.init_states()
+    music_player.init_games()
 
     bot.loop.create_task(music_player.playlist_scheduler())
+    bot.loop.create_task(music_player.voice_channel_watcher())
     print('Starting Music Player with codec: ' + codec)
 #fn setup

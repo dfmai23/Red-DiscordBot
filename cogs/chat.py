@@ -3,13 +3,14 @@ from discord.ext import commands
 import asyncio
 import os
 
-chat_path = 'data\chat\chat.txt'
+from .music_player.paths import chat_path
 #chatbot = commands.Bot(command_prefix='@Bot')
 
 class Chat:
     def __init__(self, bot):
         self.bot = bot  #discord.Client()
-        self.messages = self.init_chat()
+        self.messages = []
+        #self.messages = self.init_messages()
 
     def init_chat(self):
         f = open(chat_path, 'r')
@@ -18,6 +19,7 @@ class Chat:
         messages_list = f.readlines()
 
         for line in messages_list:
+            #print(line)
             line = line.replace('\n', '')
             line = line.split('|')
             messages[line[0].lower()] = line[1]
@@ -39,6 +41,9 @@ class Chat:
         msg = msg.lower()
         if msg in self.messages:
             return self.messages[msg]
+
+    def init_messages(self):
+        msg = ''
 
 def setup(bot):
     chat_bot = Chat(bot)  # Praise 26

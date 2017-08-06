@@ -47,15 +47,19 @@ class Playlist:
 
         self.list.append(song)    #add to server's playlist
         self.order.insert(-1, len(self.list)-1) #add index at second to last element
-        if self.shuffle:
-            self.set_shuffle()
+        if self.shuffle: self.set_shuffle()
         return song #await self.bot.say('Added to playlist!~' + box(song.title + ' - ' + song.artist))
 
-    def remove(self, index):
-        i = int(index)
+    def remove(self, name_or_index):
+        #if name_or_index.isnumeric():
+        #    i = int(name_or_index)
+        #elif self.in_playlist(name_or_index):
+
+        i = int(name_or_index)
         if (i+1) > len(self.list):  #index to out of range
             return [3, None]
         song = self.list.pop(i)
+        print(song.title, song.artist)
         if len(self.list) == 0:       #empty playlist, stop
             self.cur_i = -1
             return [2, song]
@@ -78,10 +82,10 @@ class Playlist:
         playlist = []
         temp_playlist = ""
         for i, song in enumerate(self.list):   #enumerate for index
+            print(str(i), song.title)
             if len(temp_playlist) > MAX_CHAR_LIMIT: #discord max message limit
                 playlist.append(temp_playlist)
                 temp_playlist = ""
-            #print(song)
             song_display = str(i)+'. ' + song.display()
             if i == self.cur_i:            #currently playing song
                 cur_song = song_display
@@ -124,11 +128,14 @@ class Playlist:
             self.order = sorted(
                 self.order, key=lambda x: (x is None or x is 0, x))  #0 or none put to the end   htts://stackoverflow.com/questions/18411560
 
-    def save(self, playlist_name, author, overwrite=0):
+    def save(self, playlist_name, author='Greedie_Bot', overwrite=0):
         ftypes = r'(xml)$'
         server_pl_path = playlist_path + "\\" + self.server_id
-        if self.get_file(playlist_name+'.xml', server_pl_path) != None and overwrite==0:
+        pl_path_full = self.get_file(playlist_name+'.xml', server_pl_path)
+        if  pl_path_full != None and overwrite==0:
             return 1
+        elif pl_path_full != None and overwrite==1:
+            os.remove(pl_path_full)
 
         root = etree.Element('smil')
         head = etree.SubElement(root, 'head')
@@ -136,12 +143,15 @@ class Playlist:
         seq  = etree.SubElement(body, 'seq')
 
         head_gen = etree.SubElement(head, 'meta', name="Generator", content="Greedie_Bot v1.0")
-        head_author = etree.SubElement(head, 'author', name=author.name)
+        head_author = etree.SubElement(head, 'author', name=author)
         head_title = etree.SubElement(head, 'title')
         head_title.text = playlist_name        #default title will be same as file name
 
         for song in self.list:            #for every song in playlist, make new sub element
-            seq_media = etree.SubElement(seq, 'media', src=song.path)
+            if song.url == None:
+                seq_media = etree.SubElement(seq, 'media', src=song.path)
+            else:
+                seq_meda = etree.SubElement(seq, 'media', src=song.path, url=song.url, vlength=str(song.length))
             #print(seq_media)
 
         pl_path_full = playlist_path + '\\' + self.server_id + '\\' + playlist_name + '.xml'
@@ -156,21 +166,25 @@ class Playlist:
         f.close()
         return 0
 
-    def load(self, playlist_name, init):
+    def load(self, playlist_name, **kwargs):
+        init = kwargs.get('init', None)
         server_pl_path = playlist_path + '\\' + self.server_id
         ftypes = r'(xml|wpl)$'
-        if not init:
+        if not init:    #searches bot path first, then local path
             pl_path_full = self.find_file(playlist_name, server_pl_path, ftypes)
+            if pl_path_full == None:
+                pl_path_full = self.find_file(playlist_name, playlist_local_path, ftypes)
         else:
             pl_path_full = self.get_file(playlist_name, server_pl_path)    #saved_playlist.xml
-
         #print(pl_path_full)
+
         if pl_path_full == None and init == True:   #couldnt find default playlist make new one
             if not os.path.isdir(server_pl_path):
                 os.makedirs(server_pl_path)
-                return self
-        if pl_path_full == None:    #couldnt find playlist
-            return None
+            self.save(playlist_name.strip('.xml'))
+            return self
+        elif pl_path_full == None:                  #couldnt find playlist from command
+            return 1
         tree = xml.etree.ElementTree.parse(pl_path_full)
         root = tree.getroot()
         #print(root[0])     #<head/>
@@ -180,36 +194,50 @@ class Playlist:
 
         for i, media in enumerate(root[1][0]):
             media_src = media.get('src')
-            print(i, media_src)
+            media_url = media.get('url')
+
+            print('  ', i, media_src)
             pattern = r'^(\.{2})'       # ".."  local music library base path
             if re.match(pattern, media_src):  #if the string matches the pattern, find song in local library
                 media_path_full = re.sub(pattern, music_local_path, media_src, count=1)
+                media_path_full = '\\' + media_path_full #hackish, re.sub removes the first backslash for some reason
             else:
                 media_path_full = media_src
             #print(i, media_path_full)
 
             song_file = os.path.basename(media_path_full)
             base_path = os.path.dirname(media_path_full)
-            if self.get_file(song_file, base_path) == None:
-                print("File not found, skpping: %s" % media_path_full)
+            if self.get_file(song_file, base_path) == None and media_url == None:
+                print("\tFile not found, skipping: %s" % media_path_full)
                 continue
-            tags = TTag.get(media_path_full)
-            song = Song(tags.title, tags.duration, media_path_full, None, tags.artist)
+            elif media_url != None:
+                after_title = r'-(youtube|bandcamp|soundcloud)(.*)$'
+                media_title = re.split(after_title, media_src)[0]
+                media_title = media_title.strip(music_cache_path+'\\')  #before title
+                #print('  ', media_title)
+                song = Song(media_title, int(media.get('vlength')), media_path_full, media_url)
+            else:
+                tags = TTag.get(media_path_full)
+                if tags.title == None:
+                    pattern = r'\.(mp3|m4a)$'
+                    tags.title = song_file.strip(pattern)
+                if tags.artist == None:
+                    tags.artist = ''
+                song = Song(tags.title, tags.duration, media_path_full, None, tags.artist)
             self.list.append(song)
             self.order.append(len(self.list))
 
-        if self.repeat:     #init repeat/end of list
-            self.order[-1] = 0
-        else: #no REPEAT
-            self.order[-1] = None
-        if self.shuffle:
-            self.set_shuffle()
+        if len(self.list) > 0:  #not empty playlist
+            if self.repeat:     #init repeat/end of list
+                self.order[-1] = 0
+            else:               #no REPEAT
+                self.order[-1] = None
+            if self.shuffle:
+                self.set_shuffle()
         return self
 
 
     """________________Helper Fn's________________"""
-
-
     def find_file(self, search_term, base_path, ftype):    #pattern matching
         #r'' string literal to make trivial to have backslashes
         pattern = r'^(.*)' + search_term + r'(.*\.)' + ftype
