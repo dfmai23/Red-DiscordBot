@@ -67,7 +67,7 @@ class Music_Player:
 
     """________________Commands Operational________________"""
     @commands.command(pass_context=True)
-    async def play(self, ctx, *args): # * = keyword only arg
+    async def play(self, ctx, *args): # * = positional only arg
         """ Plays/resumes the song from current playlist"""
         if args: await self.bot.say('Use "add" command!'); return
         server = ctx.message.server
@@ -86,12 +86,14 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def pause(self, ctx):
+        """Pauses song """
         server = ctx.message.server
         self.mp_pause(server)
         await self.bot.say("Pausing music!~")
 
     @commands.command(pass_context=True)
     async def stop(self, ctx):
+        """Stops song"""
         server = ctx.message.server
         mp = self.get_mp(server)
         self.mp_stop(server)
@@ -117,18 +119,19 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def prev(self, ctx):
+        """Plays previous song"""
         server = ctx.message.server
         mp = self.get_mp(server)
         pl = self.playlists[server.id]
         self.mp_stop(server)
 
-        #get prev song in playlists
         prev_i = pl.order.index(pl.cur_i)
         prev_song = pl.list[prev_i]
         self.mp_start(server, prev_song)
 
     @commands.command(pass_context=True)
     async def replay(self, ctx):
+        """Restarts song"""
         server = ctx.message.server
         mp = self.get_mp(server)
         pl = self.playlists[server.id]
@@ -136,36 +139,43 @@ class Music_Player:
         self.mp_start(server, pl.list[pl.cur_i])
 
     @commands.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
     async def status(self, ctx):
+        """Displays music player status"""
         server = ctx.message.server
         state = self.states[server.id]
         await self.bot.say("Music Player is currently: " + state.value + '~')
 
     @commands.command(pass_context=True)
-    async def volume(self, ctx, *, decimal):    #keyword decimal to display on help
-        """Set volume between 0.0 and 1.0"""
+    async def volume(self, ctx, decimal=None):    #keyword decimal to display on help
+        """Set/Display volume between 0.0 and 1.0"""
         server = ctx.message.server
+        voice_client = self.bot.voice_client_in(server)
+        mp = voice_client.music_player
+
+        if decimal==None:
+            await self.bot.say("Volume is at " + str(mp.volume))
+            return
 
         val = float(decimal)
         if val > 1.0 or val < 0.0:
             await self.bot.say("Volume must be between 0 and 1.0!~")
             return
 
-        voice_client = self.bot.voice_client_in(server)
         if voice_client == None:
             await self.bot.say("Voice client not connected yet! Please join a voice channel and play music!~")
             return
         if not hasattr(voice_client, 'music_player'):
             await self.bot.say("Please play some music!")
             return
-        mp = voice_client.music_player
+
         mp.volume = val
         self.server_settings[server.id]["VOLUME"] = val
         await self.bot.say("Music player volume set to:  " + str(val) + '~')
 
     @commands.command(pass_context=True)
     async def songinfo(self, ctx):
-        """ Displays current palying song info """
+        """ Displays current playing song info """
         server = ctx.message.server
         pl = self.playlists[server.id]
         song = pl.now_playing
@@ -177,6 +187,7 @@ class Music_Player:
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
     async def pinfo(self, ctx, url):
+        """ DEBUG: Playlist URL info debug"""
         server = ctx.message.server
         info = await self.downloader.extract(self.bot.loop, url, download=False)
         if info != None:
@@ -201,7 +212,7 @@ class Music_Player:
             print('Not able to get info')
 
     @commands.command(pass_context=True)
-    async def add(self, ctx, song_or_url):
+    async def add(self, ctx, *, song_or_url):
         """ Add a song (local or URL) to the playlist """
         await self.add_song(ctx, song_or_url)
 
@@ -233,19 +244,20 @@ class Music_Player:
             return
 
     @commands.command(pass_context=True)
-    @checks.mod_or_permissions(administrator=True)
+    #@checks.mod_or_permissions(administrator=True)
     async def remove(self, ctx, name_or_index):     #removes a song from playlist
+        """Removes song from playlist by index"""
         server = ctx.message.server
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
 
         result, song = pl.remove(name_or_index)
-        if state == 3:
+        if result == 3:
             await self.bot.say("Playlist index not in range!~")
-        elif state == 2:
+        elif result == 2:
             await self.bot.say("Playlist now empty!")
             mp.stop()
-        elif state == 1:
+        elif result == 1:
             await self.bot.say("Removed currently playing song! Playing next song~")
             mp.stop()
             mp.start(server, pl.cur_i)
@@ -255,7 +267,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def search(self, ctx, *, searchterm):
-        """Searches a song on youtube and downloads top find """
+        """Searches a song on youtube and gets top find """
         server = ctx.message.server
         channel = ctx.message.channel
         pl = self.playlists[server.id]
@@ -269,10 +281,11 @@ class Music_Player:
             url = info['entries'][0]['webpage_url']    # TODO: handle 'webpage_url' being 'ytsearch:...' or extractor type
             await self.add_song(ctx, url)
         else:
-            await self.bot.say('Couldn\'t search!~')
+            await self.bot.say('Couldn\'t search!~')    # *, = positional args as single str
 
     @commands.command(pass_context=True)
     async def skip_to(self, ctx, index):
+        """Skip to playlist index"""
         server = ctx.message.server
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
@@ -291,6 +304,7 @@ class Music_Player:
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
     async def clear(self, ctx):
+        """Clears playlist"""
         server = ctx.message.server
         mp = self.get_mp(server)
         pl = self.playlists[server.id]
@@ -300,6 +314,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def view(self, ctx):              #View current playlist
+        """Views current playlist"""
         server = ctx.message.server
         pl = self.playlists[server.id]
 
@@ -318,6 +333,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def view_p(self, ctx):
+        """Views all playlists """
         server = ctx.message.server
         server_pl_path = playlist_path + '\\' + server.id
         pl_cached = ''
@@ -334,58 +350,68 @@ class Music_Player:
         await self.bot.say('Local playlists:\n' + box(pl_local))
 
     @commands.command(pass_context=True)
-    async def repeat(self, ctx, onoff):
+    async def repeat(self, ctx, onoff=None):
         server = ctx.message.server
         pl = self.playlists[server.id]
-        if onoff != 'on' and onoff != 'off':
+        if not (onoff in {'on', 'off', None}):
             await self.bot.say('Parameter must be "on" or "off"!~')
             return
         elif onoff == 'on':
             pl.repeat = True
         elif onoff == 'off':
             pl.repeat = False
+        else: #display repeat status
+            await self.bot.say('Repeat is ' + ('on' if pl.repeat==True else 'off'))
+            return
         pl.set_repeat()
         await self.bot.say("Repeat set to %s!~" % onoff)
 
     @commands.command(pass_context=True)
-    async def shuffle(self, ctx, onoff):
+    async def shuffle(self, ctx, onoff=None):
+        """Set/Display shuffle"""
         server = ctx.message.server
         pl = self.playlists[server.id]
-        if onoff != 'on' and onoff != 'off':
+        if not (onoff in {'on', 'off', None}):
             await self.bot.say('Parameter must be "on" or "off"!~')
             return
         elif onoff == 'on':
             pl.shuffle = True
         elif onoff == 'off':
             pl.shuffle = False
+        else: #display shuffle status
+            await self.bot.say('Shuffle is ' + ('on' if pl.shuffle==True else 'off'))
+            return
         pl.set_shuffle()
         await self.bot.say("Shuffle set to %s!~" % onoff)
 
     @commands.command(pass_context=True)
-    async def save_p(self, ctx, new_pl):       #builds own xml
+    async def save_p(self, ctx, *, new_pl):       #builds own xml
         author = ctx.message.author
         server = ctx.message.server
         pl = self.playlists[server.id]
 
-        pl_saved = pl.save(new_pl, author)
+        pl_saved = pl.save(new_pl, server, author.name)
         if pl_saved == 1:
             await self.bot.say("Already have a playlist with same name! Overwrite? Y/N~")
             reply = await self.bot.wait_for_message(author=author, channel=ctx.message.channel, check=self.check_reply)
             if reply.content in ['yes', 'y']:
-                pl_saved = pl.save(new_pl, author.name, overwrite=1)
+                pl_saved = pl.save(new_pl, server, author.name, overwrite=1)
             elif reply.content in ['no', 'n']:   #reply=0
                 await self.bot.say('Playlist not saved!~')
                 return
         await self.bot.say("Saved playlist: %s!~" % new_pl)
 
-    @commands.command(pass_context=True)
+    @commands.command(pass_context=True)    #wrapper
     async def load_p(self, ctx, pl):
         server = ctx.message.server
+        await self.bot.say("Loading playlist please wait!~")
         pl_loaded = self.load_pl(server, pl)
         if pl_loaded == 1:
             await self.bot.say("Can't find playlist to load!~")
             return
-        self.mp_start(server, self.playlists[server.id].list[0])    #autoplay
+        self.mp_reload(server)
+        #self.mp_stop(server)
+        #self.mp_start(server, self.playlists[server.id].list[0])    #autoplay
 
     @commands.command(pass_context=True)
     async def delete_p(self, ctx, pl_name):        #deletes by playlist filename bar ext
@@ -408,7 +434,7 @@ class Music_Player:
         """ Joins voice channel """
         author = ctx.message.author     #ctx = context
         server = ctx.message.server
-        channel = author.voice_channel  #channel to join,
+        channel = author.voice_channel  #channel to join
 
         if self.bot.is_voice_connected(server):
             voice_client = self.bot.voice_client_in(server)
@@ -417,6 +443,7 @@ class Music_Player:
                 return
             await voice_client.disconnect()
         await self.bot.join_voice_channel(channel)          #joins owners voice channel only
+        self.mp_reload(server)
 
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
@@ -433,10 +460,11 @@ class Music_Player:
         #TODO make bot rejoin its own vc
         server = ctx.message.server
         author = ctx.message.author
-        channel = author.voice_channel
         voice_client = self.bot.voice_client_in(server)
+        channel = voice_client.channel
         await voice_client.disconnect()
         await self.bot.join_voice_channel(channel)
+        self.mp_reload(server)
 
     @commands.command(pass_context=True)
     async def stat(self, ctx):
@@ -502,6 +530,18 @@ class Music_Player:
         music_player = self.get_mp(server)
         music_player.stop()
         self.states[server.id] = State.STOPPED
+
+    def mp_reload(self, server):
+        pl = self.playlists[server.id]
+
+        try: self.mp_stop(server)
+        except: pass
+
+        #if index==None: song = pl.list[pl.cur_i]
+        #else: song = pl.list[index]
+        song = pl.list[0]
+        self.mp_start(server, song)
+        self.mp_pause(server)       #restarts music player in a robust fashion to first song in playlist
 
     def get_mp(self, server):             #get music player of current server
         voice_client = self.bot.voice_client_in(server)
@@ -569,7 +609,7 @@ class Music_Player:
         next_song = pl.list[next_song_i]
         song_file = os.path.basename(next_song.path)
         base_path = os.path.dirname(next_song.path)
-        print('Getting next song:', base_path+song_file)
+        print('Getting next song:', base_path+'\\'+song_file)
         if pl.get_file(song_file, base_path) == None:   #file not found, skip or check url
             if next_song.url == None:
                 pl.cur_i = next_song_i    # to get next next song
@@ -618,24 +658,27 @@ class Music_Player:
             mp_stop(server)
         except:
             pass
-        self.playlists[server.id] = playlist.load(playlist_name, **kwargs)
+        self.playlists[server.id] = playlist.load(playlist_name, server, **kwargs)
 
     async def load_url_pl(self, server, info, playlist):     #returns a list of Songs
         url_playlist = []
         base_url = info['webpage_url'].split('playlist?list=')[0]
         for entry in info['entries']:
             if entry:       #check deleted vids
-                if info['extractor_key'] == 'YoutubePlaylist':
-                    song_url = base_url + 'watch?v=%s' % entry['id']
-                else:   #'SoundcloudSet', 'BandcampAlbum'
-                    song_url = entry['url']
-                info = await self.downloader.extract(self.bot.loop, song_url, download=False)
-                if info == None:
-                    continue
-                #print(song_url)
-                song_path_full = music_cache_path + '\\' + info['title'] +'-'+ info['extractor'] +'-'+ info['id'] + '.' + info['ext']
-                song = Song(info['title'], info['duration'], song_path_full, info['webpage_url'])
-                url_playlist.append(song)
+                try:        #check blocked vids
+                    if info['extractor_key'] == 'YoutubePlaylist':
+                        song_url = base_url + 'watch?v=%s' % entry['id']
+                    else:   #'SoundcloudSet', 'BandcampAlbum'
+                        song_url = entry['url']
+                    info = await self.downloader.extract(self.bot.loop, song_url, download=False)
+                    if info == None:
+                        continue
+                    #print(song_url)
+                    song_path_full = music_cache_path + '\\' + info['title'] +'-'+ info['extractor'] +'-'+ info['id'] + '.' + info['ext']
+                    song = Song(info['title'], info['duration'], song_path_full, info['webpage_url'])
+                    url_playlist.append(song)
+                except:
+                    pass
         return url_playlist
 
 
@@ -663,6 +706,24 @@ class Music_Player:
         elif reply.content.lower() == 'no' or reply.content.lower() == 'n':
             return 'no'
     """________________Management________________"""
+
+    #saves playlists and configs
+    async def shutdown_watcher(self, message):  #catch at message before it actually does anything
+        prefixes = self.bot.settings.prefixes
+        if (message.content in [prefix + 'shutdown' for prefix in prefixes] or
+        message.content in [prefix + 'restart' for prefix in prefixes]):
+            for server in self.bot.servers:
+                try:
+                    pl = self.playlists[server.id]
+                    pl.save(default_playlist, server, overwrite=1)
+                    self.mp_stop(server)
+                    print('Saving playlist:', server.id, server.name)
+                except:
+                    print('Couldn\'t save playlist:', server.id, server.name)
+                    pass
+            #self.save_config()
+            return
+
     #basically asynchronously polls music player to see if its playing or not
     async def playlist_scheduler(self):
         while self == self.bot.get_cog('Music_Player'): #while music player class is alive
@@ -709,11 +770,12 @@ class Music_Player:
                 if len(channel.voice_members) == 1 and self.states[server.id] != State.STOPPED:
                     self.mp_stop(server)
                     print('Channel empty, stopping music:', server.name, channel.name)
-            await asyncio.sleep(5)
+            await asyncio.sleep(5)  #stops music when channel is empty
 
     def save_config(self):      #save config for current server
         config_file = open(config_path, 'w')
         json.dump(self.settings, config_file, indent=4)
+        print('Saving config')
 
 
     """________________Initialization's________________"""
@@ -770,7 +832,7 @@ class Music_Player:
 
                 try:    #autoplay
                     self.mp_start(server, self.playlists[server.id].list[0])
-                    self.mp_pause(server)
+                    #self.mp_pause(server)
                 except:
                     print('Empty playlist, skipping autoplay')
 #class Music Player
@@ -835,7 +897,9 @@ def setup(bot):
     music_player.init_states()
     music_player.init_games()
 
+    bot.add_listener(music_player.shutdown_watcher, 'on_message')
     bot.loop.create_task(music_player.playlist_scheduler())
     bot.loop.create_task(music_player.voice_channel_watcher())
+    #bot.loop.create_task(music_player.music_player_watcher())
     print('Starting Music Player with codec: ' + codec)
 #fn setup

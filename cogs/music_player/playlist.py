@@ -15,6 +15,8 @@ from .downloader import Downloader, music_cache_path, music_local_path
 from .song import Song
 from .paths import playlist_path, playlist_local_path, MAX_CHAR_LIMIT
 
+author_name = 'Greedie_Bot'
+
 
 class Playlist:
     def __init__(self, server_id, repeat, shuffle):
@@ -51,6 +53,7 @@ class Playlist:
         return song #await self.bot.say('Added to playlist!~' + box(song.title + ' - ' + song.artist))
 
     def remove(self, name_or_index):
+        #only index right now
         #if name_or_index.isnumeric():
         #    i = int(name_or_index)
         #elif self.in_playlist(name_or_index):
@@ -128,8 +131,11 @@ class Playlist:
             self.order = sorted(
                 self.order, key=lambda x: (x is None or x is 0, x))  #0 or none put to the end   htts://stackoverflow.com/questions/18411560
 
-    def save(self, playlist_name, author='Greedie_Bot', overwrite=0):
+    def save(self, playlist_name, server, author=author_name, overwrite=0):
         ftypes = r'(xml)$'
+        if '.xml' in playlist_name:
+            playlist_name = playlist_name.strip('.xml')
+
         server_pl_path = playlist_path + "\\" + self.server_id
         pl_path_full = self.get_file(playlist_name+'.xml', server_pl_path)
         if  pl_path_full != None and overwrite==0:
@@ -143,6 +149,7 @@ class Playlist:
         seq  = etree.SubElement(body, 'seq')
 
         head_gen = etree.SubElement(head, 'meta', name="Generator", content="Greedie_Bot v1.0")
+        head_server = etree.SubElement(head, 'server', server=server.name, id=server.id)
         head_author = etree.SubElement(head, 'author', name=author)
         head_title = etree.SubElement(head, 'title')
         head_title.text = playlist_name        #default title will be same as file name
@@ -166,8 +173,8 @@ class Playlist:
         f.close()
         return 0
 
-    def load(self, playlist_name, **kwargs):
-        init = kwargs.get('init', None)
+    def load(self, playlist_name, server, **kwargs):
+        init = kwargs.get('init')   #default is None
         server_pl_path = playlist_path + '\\' + self.server_id
         ftypes = r'(xml|wpl)$'
         if not init:    #searches bot path first, then local path
@@ -181,7 +188,7 @@ class Playlist:
         if pl_path_full == None and init == True:   #couldnt find default playlist make new one
             if not os.path.isdir(server_pl_path):
                 os.makedirs(server_pl_path)
-            self.save(playlist_name.strip('.xml'))
+            self.save(playlist_name, server)
             return self
         elif pl_path_full == None:                  #couldnt find playlist from command
             return 1

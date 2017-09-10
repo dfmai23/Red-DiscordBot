@@ -96,6 +96,7 @@ class Bot(commands.Bot):
 
         If restart is True, the exit code will be 26 instead
         The launcher automatically restarts Red when that happens"""
+        await asyncio.sleep(3)
         self._shutdown_mode = not restart
         await self.logout()
 

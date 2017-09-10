@@ -1,0 +1,4 @@
+https://github.com/rcbyron/hey-athena-client
+https://ffmpeg.org/ffmpeg.html
+https://discordpy.readthedocs.io/en/rewrite/ext/commands/api.html#bot
+https://github.com/rg3/youtube-dl/blob/master/README.md#readme
