@@ -1,6 +1,3 @@
-"""TODO:
-    implement coroutine inits, self.playlists, and self.states
-"""
 
 __author__ = "dfmai23"
 
@@ -38,6 +35,7 @@ except:         # Missing opus
     opus = None
 else:
     opus = True
+
 
 class State(enum.Enum):
     STOPPED =   "Stopped"   # not playing anything
@@ -219,7 +217,7 @@ class Music_Player:
     """Adds a url playlist to the playlist
         - if current playlist is empty, will load it as a new playlist  """
     @commands.command(pass_context=True)
-    async def add_p(self, ctx, url):
+    async def add_playlist(self, ctx, url):
         """Adds a url playlist to the playlist """
         server = ctx.message.server
         pl = self.playlists[server.id]
@@ -252,7 +250,9 @@ class Music_Player:
         mp = self.get_mp(server)
 
         result, song = pl.remove(name_or_index)
-        if result == 3:
+        if result == 4:
+            await self.bot.say("Couldn't find song in playlist!~")
+        elif result == 3:
             await self.bot.say("Playlist index not in range!~")
         elif result == 2:
             await self.bot.say("Playlist now empty!")
@@ -266,6 +266,7 @@ class Music_Player:
             await self.bot.say("Removed from playlist!~\n" + box(song_display))
 
     @commands.command(pass_context=True)
+
     async def search(self, ctx, *, searchterm):
         """Searches a song on youtube and gets top find """
         server = ctx.message.server
@@ -284,21 +285,36 @@ class Music_Player:
             await self.bot.say('Couldn\'t search!~')    # *, = positional args as single str
 
     @commands.command(pass_context=True)
-    async def skip_to(self, ctx, index):
+    async def skipto(self, ctx, name_or_index):
         """Skip to playlist index"""
         server = ctx.message.server
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
 
-        i = int(index)
-        if (i+1) > len(pl.list):
-            await self.bot.say('Index out of range!~')
-            return
+        # i = int(index)
+        # if (i+1) > len(pl.list):
+        #     await self.bot.say('Index out of range!~')
+        #     return
+        #
+        # song = pl.list[i]
+
+        if name_or_index.isnumeric():
+            i = int(name_or_index)
+            if (i + 1) > len(pl.list):
+                await self.bot.say('Index out of range!~')
+                return
+        else:
+            searchterm = name_or_index
+            song = pl.search_song(searchterm)
+            if song is None:
+                await self.bot.say("Song not found!~")
+                return
+            i = pl.get_i(song)
 
         song = pl.list[i]
         self.mp_stop(server)
         self.mp_start(server, song)
-        song_display = index+'. ' + song.display()
+        song_display = str(i) + ". " + song.display()
         await self.bot.say('Jumping to song: ' + box(song_display))
 
     @commands.command(pass_context=True)
@@ -332,7 +348,7 @@ class Music_Player:
                 await self.bot.say(box(pl_section))
 
     @commands.command(pass_context=True)
-    async def view_p(self, ctx):
+    async def view_playlist(self, ctx):
         """Views all playlists """
         server = ctx.message.server
         server_pl_path = playlist_path + '\\' + server.id
@@ -385,7 +401,7 @@ class Music_Player:
         await self.bot.say("Shuffle set to %s!~" % onoff)
 
     @commands.command(pass_context=True)
-    async def save_p(self, ctx, *, new_pl):       #builds own xml
+    async def save_playlist(self, ctx, *, new_pl):       #builds own xml
         author = ctx.message.author
         server = ctx.message.server
         pl = self.playlists[server.id]
@@ -402,7 +418,7 @@ class Music_Player:
         await self.bot.say("Saved playlist: %s!~" % new_pl)
 
     @commands.command(pass_context=True)    #wrapper
-    async def load_p(self, ctx, pl):
+    async def load_playlist(self, ctx, pl):
         server = ctx.message.server
         await self.bot.say("Loading playlist please wait!~")
         pl_loaded = self.load_pl(server, pl)
@@ -414,7 +430,7 @@ class Music_Player:
         #self.mp_start(server, self.playlists[server.id].list[0])    #autoplay
 
     @commands.command(pass_context=True)
-    async def delete_p(self, ctx, pl_name):        #deletes by playlist filename bar ext
+    async def delete_playlist(self, ctx, pl_name):        #deletes by playlist filename bar ext
         server = ctx.message.server
         pl_path = playlist_path + '\\' + server.id
 
@@ -653,9 +669,9 @@ class Music_Player:
         -processes the playlist """
     def load_pl(self, server, playlist_name, **kwargs):          #* = forces keyword arg in caller
         server_cfg = self.server_settings[server.id]
-        playlist = Playlist(server.id, server_cfg["REPEAT"], server_cfg["SHUFFLE"])   #creat empty playlist
+        playlist = Playlist(server.id, server_cfg["REPEAT"], server_cfg["SHUFFLE"])   #create empty playlist
         try:
-            mp_stop(server)
+            self.mp_stop(server)
         except:
             pass
         self.playlists[server.id] = playlist.load(playlist_name, server, **kwargs)

@@ -37,7 +37,13 @@ class Playlist:
                 return i        #returning index in playlist
         return None
 
-    def in_playlist(self, song):     #find song in playlist
+    def search_song(self, searchterm):  #find song in playlist by songname
+        for song in self.list:
+            if re.search(searchterm, song.title, re.IGNORECASE):
+                return song
+        return None
+
+    def in_playlist(self, song):     #find song in playlist by file path
         for pl_song in self.list:
             if song.path == pl_song.path:
                 return True
@@ -53,27 +59,31 @@ class Playlist:
         return song #await self.bot.say('Added to playlist!~' + box(song.title + ' - ' + song.artist))
 
     def remove(self, name_or_index):
-        #only index right now
-        #if name_or_index.isnumeric():
-        #    i = int(name_or_index)
-        #elif self.in_playlist(name_or_index):
+        if name_or_index.isnumeric():
+            i = int(name_or_index)
+            if (i+1) > len(self.list):  #index to out of range
+                return [3, None]
+        else:
+            searchterm = name_or_index
+            song = self.search_song(searchterm)
+            if (song is None): #didnt find song in playlist
+                return [4, None]
+            i = self.get_i(song)
 
-        i = int(name_or_index)
-        if (i+1) > len(self.list):  #index to out of range
-            return [3, None]
         song = self.list.pop(i)
-        print(song.title, song.artist)
-        if len(self.list) == 0:       #empty playlist, stop
+        print('Removed: ' + song.title, song.artist)
+        if len(self.list) == 0:  # empty playlist, stop
             self.cur_i = -1
             return [2, song]
-        elif i != self.cur_i:       #removed a song
-            self.order.pop(-2)      #second to last element
+        elif i != self.cur_i:  # removed a song
+            self.order.pop(-2)  # second to last element
             if i < self.cur_i:
-                self.cur_i -= 1     #removed a song before now playing, have to shift index one back
-            return [0, song]        #keep playing though
-        elif i == self.cur_i:       #removed current playing song from playlist
+                self.cur_i -= 1  # removed a song before now playing, have to shift index one back
+            return [0, song]  # keep playing though
+        elif i == self.cur_i:  # removed current playing song from playlist
             self.order.pop(-2)
-            return [1, song]        #play next song which is now the current index so dont have to change it
+            return [1, song]  # play next song which is now the current index so dont have to change it
+
 
     def clear(self):
         self.list = []
@@ -261,3 +271,4 @@ class Playlist:
         if os.path.isfile(file_path_full):
             return file_path_full
         return None
+

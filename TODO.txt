@@ -1,0 +1,28 @@
+"""TODO:
+    implement coroutine inits, self.playlists, and self.states
+"""
+
+error checking in logs
+
+name_or_idx  - remove, skip_to	DONE
+
+no args - slow()
+help info
+play also adds song and jumps to it on playlist
+split into more files
+fix coroutine hang crash
+move startup checks to after joinig server so dont have to reload
+
+
+add to readme
+	give descriptions for bat files
+	start the bot using start_red.bat
+	run `reload mp to start music player
+
+
+
+chatterbot
+text to speech - google assistant?
+
+
+daily wp
