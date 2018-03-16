@@ -32,7 +32,4 @@ playlist_local_path = 'D:\Music\Playlists'
 #playlist_local_path = '\\\\MAI-PC\Music\Playlists'
 
 
-chat_path = 'data\chat'
-chat_file = 'chat.txt'
 
-MAX_CHAR_LIMIT = 1900

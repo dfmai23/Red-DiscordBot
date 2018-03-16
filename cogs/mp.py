@@ -47,8 +47,7 @@ class Music_Player:
     """________________Commands Operational________________"""
     @commands.command(pass_context=True)
     async def play(self, ctx, *, song_or_url=None): # *args = positional only varargs
-        """ Plays/resumes the song from current playlist,
-            If arguments are given then will add that song to the playlist and play it instead """
+        """ Plays/resumes current song or plays new song """
 
         server = ctx.message.server
         cur_state = self.states[server.id]
@@ -79,14 +78,14 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def pause(self, ctx):
-        """Pauses song """
+        """Pauses current song """
         server = ctx.message.server
         self.mp_pause(server)
         await self.bot.say("Pausing music!~")
 
     @commands.command(pass_context=True)
     async def stop(self, ctx):
-        """Stops song"""
+        """Stops current song"""
         server = ctx.message.server
         mp = self.get_mp(server)
         self.mp_stop(server)
@@ -124,7 +123,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def replay(self, ctx):
-        """Restarts song"""
+        """Restarts current song"""
         server = ctx.message.server
         mp = self.get_mp(server)
         pl = self.playlists[server.id]
@@ -239,7 +238,7 @@ class Music_Player:
     @commands.command(pass_context=True)
     #@checks.mod_or_permissions(administrator=True)
     async def remove(self, ctx, name_or_index):     #removes a song from playlist
-        """Removes song from playlist by index"""
+        """Removes song from playlist by index/by searching song name"""
         server = ctx.message.server
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
@@ -261,9 +260,8 @@ class Music_Player:
             await self.bot.say("Removed from playlist!~\n" + box(song_display))
 
     @commands.command(pass_context=True)
-
     async def search(self, ctx, *, searchterm):
-        """Searches a song on youtube and gets top find """
+        """Searches a song on youtube and gets top result """
         server = ctx.message.server
         channel = ctx.message.channel
         pl = self.playlists[server.id]
@@ -281,7 +279,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def skipto(self, ctx, name_or_index):
-        """Skip to playlist index"""
+        """Skip playlist to index/song name"""
         server = ctx.message.server
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
@@ -308,7 +306,7 @@ class Music_Player:
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
     async def clear(self, ctx):
-        """Clears playlist"""
+        """Clears current playlist"""
         server = ctx.message.server
         mp = self.get_mp(server)
         pl = self.playlists[server.id]
@@ -355,6 +353,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def repeat(self, ctx, onoff=None):
+        """Set/display repeat"""
         server = ctx.message.server
         pl = self.playlists[server.id]
         if not (onoff in {'on', 'off', None}):
@@ -390,6 +389,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def save_playlist(self, ctx, *, new_pl):       #builds own xml
+        """Saves current playlist"""
         author = ctx.message.author
         server = ctx.message.server
         pl = self.playlists[server.id]
@@ -407,6 +407,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)    #wrapper
     async def load_playlist(self, ctx, pl):
+        """Loads the specified playlist"""
         server = ctx.message.server
         await self.bot.say("Loading playlist please wait!~")
         pl_loaded = self.load_pl(server, pl)
@@ -419,6 +420,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def delete_playlist(self, ctx, pl_name):        #deletes by playlist filename bar ext
+        """Deletes the specified playlist"""
         server = ctx.message.server
         pl_path = playlist_path + '\\' + server.id
 
@@ -452,6 +454,7 @@ class Music_Player:
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
     async def leave_vc(self, ctx):
+        """Leave voice channel"""
         server = ctx.message.server
 
         if self.bot.is_voice_connected(server):
@@ -461,6 +464,7 @@ class Music_Player:
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
     async def rejoin(self, ctx):
+        """Rejoin voice channel"""
         #TODO make bot rejoin its own vc
         server = ctx.message.server
         author = ctx.message.author
@@ -472,6 +476,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def stat(self, ctx):
+        """Console output media player info"""
         server = ctx.message.server
         vc = self.bot.voice_client_in(server)
         channel = vc.channel
@@ -709,6 +714,8 @@ class Music_Player:
             return 'yes'
         elif reply.content.lower() == 'no' or reply.content.lower() == 'n':
             return 'no'
+
+
     """________________Management________________"""
 
     #saves playlists and configs
@@ -824,21 +831,24 @@ class Music_Player:
         print('Autojoining Channels')
         states = []
         if self.settings["AUTOJOIN"] == True:
-            for c_id in self.settings["AUTOJOIN_CHANNELS"]:
-                channel= self.bot.get_channel(c_id) #channel to join
-                server = channel.server
-                try:
-                    await self.bot.join_voice_channel(channel)
-                    print('  Joining channel:', server.id, server.name, channel.id, channel.name)
-                    #await self.bot.send_message('Hi!~')
-                except:
-                    print('  Already in channel, skipping:', server.id, server.name, channel.id, channel.name)
+            try:
+                for c_id in self.settings["AUTOJOIN_CHANNELS"]:
+                    channel= self.bot.get_channel(c_id) #channel to join
+                    server = channel.server
+                    try:
+                        await self.bot.join_voice_channel(channel)
+                        print('  Joining channel:', server.id, server.name, channel.id, channel.name)
+                        #await self.bot.send_message('Hi!~')
+                    except:
+                        print('  Already in channel, skipping:', server.id, server.name, channel.id, channel.name)
 
-                try:    #autoplay
-                    self.mp_start(server, self.playlists[server.id].list[0])
-                    #self.mp_pause(server)
-                except:
-                    print('Empty playlist, skipping autoplay')
+                    try:    #autoplay
+                        self.mp_start(server, self.playlists[server.id].list[0])
+                        #self.mp_pause(server)
+                    except:
+                        print('Empty playlist, skipping autoplay')
+            except:
+                print("Cannot join channels, try reloading cog after initial start!~")
 #class Music Player
 
 
@@ -861,5 +871,4 @@ def setup(bot):
     bot.loop.create_task(music_player.voice_channel_watcher())
     #bot.loop.create_task(music_player.music_player_watcher())
     print('Starting Music Player with codec: ' + codec)
-    print("Remember to reload cog after initial start!\n")
 #fn setup

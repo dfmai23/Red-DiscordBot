@@ -8,14 +8,13 @@ name_or_idx  - remove, skip_to	DONE
 play also adds song and jumps to it on playlist
 	effectively does add and skipto if given a link
 split into more files
+help info
 
-
-
+seperate view cached and local playlists
 change paths.py 
 config.json
 	make server specific settings only 
 seperate streamed and local commands
-help info
 no args - slow()
 
 

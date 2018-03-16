@@ -6,8 +6,13 @@ import copy
 
 from cleverwrap import CleverWrap
 from chatterbot import ChatBot
-from .music_player.paths import chat_path, chat_file
 #chatbot = commands.Bot(command_prefix='@Bot')
+
+chat_path = 'data\chat'
+chat_file = 'chat.txt'
+
+MAX_CHAR_LIMIT = 1900
+
 
 """
 #using cleverwrap
