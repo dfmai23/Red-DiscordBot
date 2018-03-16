@@ -8,7 +8,6 @@ import threading
 import asyncio
 import logging
 import subprocess
-import enum
 import random
 import json
 import xml.etree.ElementTree as etree
@@ -19,34 +18,16 @@ import youtube_dl
 from tinytag import TinyTag as TTag
 from .utils.chat_formatting import *
 from .utils import checks
+
+from .music_player.startup import *
 from .music_player.downloader import Downloader, music_cache_path, music_local_path
 from .music_player.playlist import Playlist, playlist_path, playlist_local_path #, default_playlist
 from .music_player.song import Song
 from .music_player.paths import *
+from .music_player.state import State
 
 log = logging.getLogger(__name__)
 
-try:
-    if not discord.opus.is_loaded():
-        discord.opus.load_opus('libopus-0.dll')
-except OSError:  # Incorrect bitness
-    opus = False
-except:         # Missing opus
-    opus = None
-else:
-    opus = True
-
-
-class State(enum.Enum):
-    STOPPED =   "Stopped"   # not playing anything
-    PLAYING =   "Playing"   # playing music
-    PAUSED  =   "Paused"    # paused
-    #WAITING =   "Waiting"   # The player has finished its song but is still downloading the next one
-    DONE    =   "Done"      # done playing current song
-
-    def __str__(self):
-        return self.name
-#class State
 
 
 class Music_Player:
@@ -65,12 +46,26 @@ class Music_Player:
 
     """________________Commands Operational________________"""
     @commands.command(pass_context=True)
-    async def play(self, ctx, *args): # * = positional only arg
-        """ Plays/resumes the song from current playlist"""
-        if args: await self.bot.say('Use "add" command!'); return
+    async def play(self, ctx, *, song_or_url=None): # *args = positional only varargs
+        """ Plays/resumes the song from current playlist,
+            If arguments are given then will add that song to the playlist and play it instead """
+
         server = ctx.message.server
         cur_state = self.states[server.id]
         pl = self.playlists[server.id]
+        mp = self.get_mp(server)
+
+        print("play song_or_url: " + song_or_url)
+        if song_or_url is not None:
+            tasks = [self.add_song(ctx, song_or_url)]   # running it synchornously,
+            await asyncio.wait(tasks)                   #can also do with loop.run_until_complete???
+
+            song = pl.list[-1]
+            self.mp_stop(server)
+            self.mp_start(server, song)
+            song_display = str(len(pl.list)-1) + ". " + song.display()
+            await self.bot.say('Jumping to song: ' + box(song_display))
+            return
 
         if cur_state == State.PAUSED:
             self.mp_play(server)
@@ -210,7 +205,7 @@ class Music_Player:
             print('Not able to get info')
 
     @commands.command(pass_context=True)
-    async def add(self, ctx, *, song_or_url):
+    async def add(self, ctx, *, song_or_url):   #*, = positional args as single str
         """ Add a song (local or URL) to the playlist """
         await self.add_song(ctx, song_or_url)
 
@@ -290,13 +285,6 @@ class Music_Player:
         server = ctx.message.server
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
-
-        # i = int(index)
-        # if (i+1) > len(pl.list):
-        #     await self.bot.say('Index out of range!~')
-        #     return
-        #
-        # song = pl.list[i]
 
         if name_or_index.isnumeric():
             i = int(name_or_index)
@@ -794,7 +782,7 @@ class Music_Player:
         print('Saving config')
 
 
-    """________________Initialization's________________"""
+    """____________MP Initialization's________________"""
     def init_settings(self):
         print('Loading settings')
         self.settings = json.load(open(config_path, 'r'))
@@ -853,51 +841,6 @@ class Music_Player:
                     print('Empty playlist, skipping autoplay')
 #class Music Player
 
-"""startup checks"""
-def check_cfg():
-    if not os.path.isfile(config_path):         #check and create config file
-        print("Creating default audio config.json")
-        config_file = open(config_path, 'w')
-        json.dump(default_cfg, config_file, indent=4)
-    if not os.path.isdir(music_cache_path):
-        print('Creating music cache folder')
-        os.makedirs(music_cache_path)
-    if not os.path.isdir(playlist_path):
-        print('Creating /playlists folder')
-        os.makedirs(playlist_path)
-
-def check_ytdl():
-    if youtube_dl is None:
-        raise RuntimeError("You need to run `pip3 install youtube_dl`")
-    if opus is False:
-        raise RuntimeError(
-            "Your opus library's bitness must match your python installation's"
-            " bitness. They both must be either 32bit or 64bit.")
-    elif opus is None:
-        raise RuntimeError(
-            "You need to install ffmpeg and opus. See \"https://github.com/"
-            "Twentysix26/Red-DiscordBot/wiki/Requirements\"")
-
-def check_codec():
-    try:
-        subprocess.call(["ffmpeg", "-version"], stdout=subprocess.DEVNULL)
-    except FileNotFoundError:   #try fails, catch it
-        player = False
-    else:                       #try succeeds
-        player = "ffmpeg"
-
-    if not player:
-        if os.name == "nt":
-            msg = "ffmpeg isn't installed"
-        else:
-            msg = "Neither ffmpeg nor avconv are installed"
-        raise RuntimeError(
-          "{}.\nConsult the guide for your operating system "
-          "and do ALL the steps in order.\n"
-          "https://twentysix26.github.io/Red-Docs/\n"
-          "".format(msg))
-    return player
-
 
 def setup(bot):
     check_cfg()
@@ -918,4 +861,5 @@ def setup(bot):
     bot.loop.create_task(music_player.voice_channel_watcher())
     #bot.loop.create_task(music_player.music_player_watcher())
     print('Starting Music Player with codec: ' + codec)
+    print("Remember to reload cog after initial start!\n")
 #fn setup

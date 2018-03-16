@@ -1,4 +1,6 @@
 # do i need vol, repeat ... save_playlists???
+
+#media player global settings
 default_cfg = {"VOLUME": .5,
                 "REPEAT": True,
                 "SHUFFLE": False,

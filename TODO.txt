@@ -5,13 +5,22 @@
 error checking in logs
 
 name_or_idx  - remove, skip_to	DONE
-
-no args - slow()
-help info
 play also adds song and jumps to it on playlist
+	effectively does add and skipto if given a link
 split into more files
-fix coroutine hang crash
+
+
+
+change paths.py 
+config.json
+	make server specific settings only 
+seperate streamed and local commands
+help info
+no args - slow()
+
+
 move startup checks to after joinig server so dont have to reload
+fix coroutine hang crash
 
 
 add to readme
