@@ -84,7 +84,6 @@ class Playlist:
             self.order.pop(-2)
             return [1, song]  # play next song which is now the current index so dont have to change it
 
-
     def clear(self):
         self.list = []
         self.cur_i = -1
@@ -217,7 +216,7 @@ class Playlist:
             pattern = r'^(\.{2})'       # ".."  local music library base path
             if re.match(pattern, media_src):  #if the string matches the pattern, find song in local library
                 media_path_full = re.sub(pattern, music_local_path, media_src, count=1)
-                media_path_full = '\\' + media_path_full #hackish, re.sub removes the first backslash for some reason
+                media_path_full = media_path_full #hackish, re.sub removes the first backslash for some reason
             else:
                 media_path_full = media_src
             #print(i, media_path_full)

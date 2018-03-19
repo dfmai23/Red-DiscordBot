@@ -54,7 +54,7 @@ class Music_Player:
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
 
-        print("play song_or_url: " + song_or_url)
+        #print("play song_or_url: " + song_or_url)
         if song_or_url is not None:
             tasks = [self.add_song(ctx, song_or_url)]   # running it synchornously,
             await asyncio.wait(tasks)                   #can also do with loop.run_until_complete???
@@ -238,7 +238,7 @@ class Music_Player:
     @commands.command(pass_context=True)
     #@checks.mod_or_permissions(administrator=True)
     async def remove(self, ctx, name_or_index):     #removes a song from playlist
-        """Removes song from playlist by index/by searching song name"""
+        """Removes song from playlist by index/searching song name"""
         server = ctx.message.server
         pl = self.playlists[server.id]
         mp = self.get_mp(server)
@@ -334,22 +334,26 @@ class Music_Player:
                 await self.bot.say(box(pl_section))
 
     @commands.command(pass_context=True)
-    async def view_playlist(self, ctx):
-        """Views all playlists """
+    async def view_playlists(self, ctx, local=None):
+        """Views cached or local playlists """
         server = ctx.message.server
         server_pl_path = playlist_path + '\\' + server.id
         pl_cached = ''
         pl_local = ''
         pattern = r'\.(xml|wpl)$'
-        for root, dirs, files in os.walk(server_pl_path):
-            for name in files:
-                pl_cached += re.split(pattern, name)[0] + '\n'
-        for root, dirs, files in os.walk(playlist_local_path):
-            for name in files:
-                pl_local += re.split(pattern, name)[0] + '\n'
 
-        await self.bot.say('Cached playlists:\n' + box(pl_cached))
-        await self.bot.say('Local playlists:\n' + box(pl_local))
+        if local is None:
+            for root, dirs, files in os.walk(server_pl_path):
+                for name in files:
+                    pl_cached += re.split(pattern, name)[0] + '\n'
+            await self.bot.say('Cached playlists:\n' + box(pl_cached))
+        elif local == 'local':
+            for root, dirs, files in os.walk(playlist_local_path):
+                for name in files:
+                    pl_local += re.split(pattern, name)[0] + '\n'
+            await self.bot.say('Local playlists:\n' + box(pl_local))
+        else:
+            await self.bot.say('Use "local" parameter to view local playlists!~')
 
     @commands.command(pass_context=True)
     async def repeat(self, ctx, onoff=None):
@@ -388,22 +392,22 @@ class Music_Player:
         await self.bot.say("Shuffle set to %s!~" % onoff)
 
     @commands.command(pass_context=True)
-    async def save_playlist(self, ctx, *, new_pl):       #builds own xml
-        """Saves current playlist"""
+    async def save_playlist(self, ctx, *, playlist_name):       #builds own xml
+        """Saves current playlist to cache"""
         author = ctx.message.author
         server = ctx.message.server
         pl = self.playlists[server.id]
 
-        pl_saved = pl.save(new_pl, server, author.name)
+        pl_saved = pl.save(playlist_name, server, author.name)
         if pl_saved == 1:
             await self.bot.say("Already have a playlist with same name! Overwrite? Y/N~")
             reply = await self.bot.wait_for_message(author=author, channel=ctx.message.channel, check=self.check_reply)
-            if reply.content in ['yes', 'y']:
-                pl_saved = pl.save(new_pl, server, author.name, overwrite=1)
-            elif reply.content in ['no', 'n']:   #reply=0
+            if reply.content in ['yes', 'y', 'Y']:
+                pl_saved = pl.save(playlist_name, server, author.name, overwrite=1)
+            elif reply.content in ['no', 'n', 'N']:   #reply=0
                 await self.bot.say('Playlist not saved!~')
                 return
-        await self.bot.say("Saved playlist: %s!~" % new_pl)
+        await self.bot.say("Saved playlist: %s!~" % playlist_name)
 
     @commands.command(pass_context=True)    #wrapper
     async def load_playlist(self, ctx, pl):
@@ -414,9 +418,9 @@ class Music_Player:
         if pl_loaded == 1:
             await self.bot.say("Can't find playlist to load!~")
             return
-        self.mp_reload(server)
-        #self.mp_stop(server)
-        #self.mp_start(server, self.playlists[server.id].list[0])    #autoplay
+        #self.mp_reload(server)
+        self.mp_stop(server)
+        self.mp_start(server, self.playlists[server.id].list[0])    #autoplay
 
     @commands.command(pass_context=True)
     async def delete_playlist(self, ctx, pl_name):        #deletes by playlist filename bar ext
@@ -476,7 +480,7 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     async def stat(self, ctx):
-        """Console output media player info"""
+        """DEBUG: media player info debug"""
         server = ctx.message.server
         vc = self.bot.voice_client_in(server)
         channel = vc.channel
@@ -660,7 +664,7 @@ class Music_Player:
         -else will search for playlist with closest name
         -if init is on will also create server playlist path if not found and load the empty playlist
         -processes the playlist """
-    def load_pl(self, server, playlist_name, **kwargs):          #* = forces keyword arg in caller
+    def load_pl(self, server, playlist_name, **kwargs):          #** = forces keyword arg in caller
         server_cfg = self.server_settings[server.id]
         playlist = Playlist(server.id, server_cfg["REPEAT"], server_cfg["SHUFFLE"])   #create empty playlist
         try:

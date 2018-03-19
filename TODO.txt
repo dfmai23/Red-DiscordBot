@@ -5,22 +5,20 @@
 error checking in logs
 
 name_or_idx  - remove, skip_to	DONE
-play also adds song and jumps to it on playlist
+play also adds song and jumps to it on playlist 	DONE
 	effectively does add and skipto if given a link
-split into more files
-help info
+split into more files 						DONE
+help info						DONE
+seperate local and cached playlist commands	DONE
 
-seperate view cached and local playlists
 change paths.py 
 config.json
 	make server specific settings only 
-seperate streamed and local commands
-no args - slow()
 
 
 move startup checks to after joinig server so dont have to reload
 fix coroutine hang crash
-
+fix shuffle repeat?? move to media player??
 
 add to readme
 	give descriptions for bat files

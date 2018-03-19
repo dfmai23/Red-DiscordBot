@@ -11,8 +11,6 @@ from chatterbot import ChatBot
 chat_path = 'data\chat'
 chat_file = 'chat.txt'
 
-MAX_CHAR_LIMIT = 1900
-
 
 """
 #using cleverwrap
