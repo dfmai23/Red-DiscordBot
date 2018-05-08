@@ -4,13 +4,6 @@
 
 error checking in logs
 
-name_or_idx  - remove, skip_to	DONE
-play also adds song and jumps to it on playlist 	DONE
-	effectively does add and skipto if given a link
-split into more files 						DONE
-help info						DONE
-seperate local and cached playlist commands	DONE
-
 change paths.py 
 config.json
 	make server specific settings only 
