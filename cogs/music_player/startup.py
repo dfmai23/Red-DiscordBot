@@ -9,7 +9,7 @@ from .paths import *
 """startup checks"""
 def check_cfg():
     if not os.path.isfile(config_path):         #check and create config file
-        print("Creating default audio config.json")
+        print("Creating default music player config.json")
         config_file = open(config_path, 'w')
         json.dump(default_cfg, config_file, indent=4)
     if not os.path.isdir(music_cache_path):

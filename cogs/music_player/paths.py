@@ -1,17 +1,19 @@
 # do i need vol, repeat ... save_playlists???
 
+
 #media player global settings
+
 default_cfg = { "AUTOJOIN": True,
                 "AUTOJOIN_CHANNELS": {},
+                "DEFAULT_SERVER_SETTINGS": {
+                        "VOLUME": 0.5,
+                        "REPEAT": True,
+                        "SHUFFLE": False,
+                        "VOTE_RATIO": 0.5,
+                        "VOTES_REQUIRED": 3,
+                        "SAVE_PLAYLIST": True,
+                },
                 "SERVER_SETTINGS": {}
-            }
-
-server_cfg = {  "VOLUME": .5,
-                "REPEAT": True,
-                "SHUFFLE": False,
-                "VOTE_RATIO": .5,
-                "VOTES_REQUIRED": 3,
-                "SAVE_PLAYLISTS": True,
             }
 
 config_path = 'data\music\config.json'

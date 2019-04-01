@@ -1,27 +1,26 @@
 """TODO:
-    implement coroutine inits, self.playlists, and self.states
 """
+  implement coroutine inits, self.playlists, and self.states
 
 error checking in logs
-
-change paths.py 
+ 
 config.json
 	make server specific settings only 
-
+	rename to global config and server config
+	move default_cfg form paths to config.json
 
 move startup checks to after joinig server so dont have to reload
 fix coroutine hang crash
 fix shuffle repeat?? move to media player??
 
-add to readme
+add to readme music player
 	give descriptions for bat files
-	start the bot using start_red.bat
-	run `reload mp to start music player
-
 
 
 chatterbot
 text to speech - google assistant?
 
 
-daily wp
+daily wp and posts
+
+embed gifs

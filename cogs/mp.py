@@ -34,7 +34,7 @@ class Music_Player:
     def __init__(self, bot, codec):
         self.bot = bot              #class discord.Client
         self.settings = {}
-        self.server_settings = {} #server specfic settings
+        self.server_settings = {}   #server specfic settings
         self.playlists = {} #music queues for each server
         self.states = {}    #status of each music player, ie. playing/paused
         self.games = {}
@@ -44,7 +44,7 @@ class Music_Player:
     #joins voice channel by channel id
     #def autojoin_channel(
 
-    """________________Commands Operational________________"""
+    """————————————————————Commands Music Player————————————————————"""
     @commands.command(pass_context=True)
     async def play(self, ctx, *, song_or_url=None): # *args = positional only varargs
         """ Plays/resumes current song or plays new song """
@@ -175,7 +175,7 @@ class Music_Player:
         await self.bot.say(box(songinfo))
 
 
-    """________________Commands Playlist________________"""
+    """————————————————————_Commands Playlist————————————————————"""
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
     async def pinfo(self, ctx, url):
@@ -209,7 +209,7 @@ class Music_Player:
         await self.add_song(ctx, song_or_url)
 
     """Adds a url playlist to the playlist
-        - if current playlist is empty, will load it as a new playlist  """
+        -if current playlist is empty, will load it as a new playlist  """
     @commands.command(pass_context=True)
     async def add_playlist(self, ctx, url):
         """Adds a url playlist to the playlist """
@@ -437,7 +437,7 @@ class Music_Player:
             await self.bot.say ("Deleted playlist: %s!~" % pl_name)
 
 
-    """________________Commands Server________________"""
+    """————————————————————Commands Server————————————————————"""
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
     async def join_vc(self, ctx):
@@ -510,7 +510,7 @@ class Music_Player:
             print(key, val)
 
 
-    """________________Generics________________"""
+    """————————————————————Generics————————————————————"""
     #play/resume
     def mp_play(self, server):
         music_player = self.get_mp(server)
@@ -695,7 +695,7 @@ class Music_Player:
         return url_playlist
 
 
-    """________________Helper Fn's________________"""
+    """————————————————————Helper Fn's————————————————————"""
     def find_file(self, search_term, base_path, ftype):    #pattern matching
         #r'' string literal to make trivial to have backslashes
         pattern = r'^(.*)' + search_term + r'(.*\.)' + ftype
@@ -720,7 +720,7 @@ class Music_Player:
             return 'no'
 
 
-    """________________Management________________"""
+    """————————————————————Management————————————————————"""
 
     #saves playlists and configs
     async def shutdown_watcher(self, message):  #catch at message before it actually does anything
@@ -789,15 +789,17 @@ class Music_Player:
 
     def save_config(self):      #save config for current server
         config_file = open(config_path, 'w')
-        json.dump(self.settings, config_file, indent=4)
-        print('Saving config')
+        json.dump(self.settings, config_file, indent=4) #in:self.settings, out:config_file
+        print('Saving config for servers')
 
 
-    """____________MP Initialization's________________"""
+    """————————————————————MP Initialization's————————————————————"""
     def init_settings(self):
+        print('————————————————————` Media Player————————————————————')
         print('Loading settings')
         self.settings = json.load(open(config_path, 'r'))
         self.server_settings = self.settings["SERVER_SETTINGS"]
+        server_cfg = self.settings["DEFAULT_SERVER_SETTINGS"]
 
         for server in self.bot.servers:
             if not server.id in self.server_settings:   #create new default server settings
@@ -812,7 +814,7 @@ class Music_Player:
     """Initializes autojoining by:
         -autojoining channels from settings file and owner channel
         -loading its last playlist
-        -starts playing if channel no empty  """
+        -starts playing if channel not empty  """
     def init_playlists(self):
         print('Loading Playlists')
         playlists = {}      #map
@@ -844,7 +846,7 @@ class Music_Player:
                         print('  Joining channel:', server.id, server.name, channel.id, channel.name)
                         #await self.bot.send_message('Hi!~')
                     except:
-                        print('  Already in channel, skipping:', server.id, server.name, channel.id, channel.name)
+                        print('  Already in channel, skipping:', server.id, server.name, ', ', channel.id, channel.name)
 
                     try:    #autoplay
                         self.mp_start(server, self.playlists[server.id].list[0])
