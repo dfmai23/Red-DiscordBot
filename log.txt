@@ -1,0 +1,141 @@
+Collecting pip (from -r requirements.txt (line 1))
+  Using cached https://files.pythonhosted.org/packages/d8/f3/413bab4ff08e1fc4828dfc59996d721917df8e8583ea
+85385d51125dceff/pip-19.0.3-py2.py3-none-any.whl
+Collecting discord.py[voice] (from -r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/97/3c/2a97b47fd8839f8863241857bbd6a3998d1de1662b78
+8c8d9322e5a40901/discord.py-0.16.12.tar.gz
+Collecting youtube_dl (from -r requirements.txt (line 3))
+  Using cached https://files.pythonhosted.org/packages/c8/99/17acd37b61bee7d19cb9f739c0052626debb709bec2c
+65819aa97f611896/youtube_dl-2019.4.1-py2.py3-none-any.whl
+Collecting imgurpython (from -r requirements.txt (line 4))
+  Using cached https://files.pythonhosted.org/packages/d4/76/514defcb05e6d58ded427f57d736ce6dfe879e018839
+2385a986e8ef3b7b/imgurpython-1.1.7.tar.gz
+Collecting TinyTag (from -r requirements.txt (line 5))
+  Using cached https://files.pythonhosted.org/packages/73/4b/0c57a99a66abd4aae7128b14256923d9a47877a18a32
+514156a403f4b9e7/tinytag-1.0.0.tar.gz
+Collecting chatterbot (from -r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/6c/0e/dac0d82f34f86bf509cf5ef3e2dfc5aa7d444bd843a2
+330ceb7d854f84f2/ChatterBot-1.0.5-py2.py3-none-any.whl
+Collecting aiohttp<1.1.0,>=1.0.0 (from discord.py[voice]->-r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/09/5a/7b81ea8729d41f44c6fe6a116e466c8fb884950a0061
+aa3768dbd6bee2f8/aiohttp-1.0.5.tar.gz
+Collecting websockets<4.0,>=3.1 (from discord.py[voice]->-r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/0d/31/569e885741198cd9cbaa116992ecc423ded61dd00b11
+3bf6b421ae893689/websockets-3.4-cp36-cp36m-win_amd64.whl
+Collecting PyNaCl==1.0.1 (from discord.py[voice]->-r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/94/f1/c21b4fa3c1c80ecf06d9f2db742bb27975a6215f222d
+783dccff06c3caaa/PyNaCl-1.0.1-cp36-cp36m-win_amd64.whl
+Collecting requests (from imgurpython->-r requirements.txt (line 4))
+  Using cached https://files.pythonhosted.org/packages/7d/e3/20f3d364d6c8e5d2353c72a67778eb189176f08e873c
+9900e10c0287b84b/requests-2.21.0-py2.py3-none-any.whl
+Collecting python-dateutil<2.8,>=2.7 (from chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/74/68/d87d9b36af36f44254a8d512cbfc48369103a3b9e474
+be9bdfe536abfc45/python_dateutil-2.7.5-py2.py3-none-any.whl
+Collecting pytz (from chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/61/28/1d3920e4d1d50b19bc5d24398a7cd85cc7b9a75a4905
+70d5a30c57622d34/pytz-2018.9-py2.py3-none-any.whl
+Collecting nltk<4.0,>=3.2 (from chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/6f/ed/9c755d357d33bc1931e157f537721efb5b88d2c583fe
+593cc09603076cc3/nltk-3.4.zip
+Collecting sqlalchemy<1.3,>=1.2 (from chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/21/ed/7eb53305b43ca51774a458d7c292f3bc7664d7a9bbb5
+bac4149fa34756b9/SQLAlchemy-1.2.18.tar.gz
+Collecting spacy<2.2,>=2.1 (from chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/4c/f6/e146ea31f994581a31bd50331dbfc005becef1003b54
+619edfc22ab2517b/spacy-2.1.3-cp36-cp36m-win_amd64.whl
+Collecting pint>=0.8.1 (from chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/15/9d/bf177ebbc57d25e9e296addc14a1303d1e34d7964af5
+df428a8332349c42/Pint-0.9-py2.py3-none-any.whl
+Collecting mathparse<0.2,>=0.1 (from chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/c3/e5/4910fb85950cb960fcf3f5aabe1c8e55f5c9201788a1
+c1302b570a7e1f84/mathparse-0.1.2-py3-none-any.whl
+Collecting pymongo<4.0,>=3.3 (from chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/d8/25/44b0fc81668a883739b108d9bd0c95b24f0b0204cb2d
+c93e0f259e173670/pymongo-3.7.2-cp36-cp36m-win_amd64.whl
+Collecting pyyaml<5.2,>=5.1 (from chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/72/da/386634cb17f33b12278af017ccb3314cede4806af702
+85f396b8f6af1203/PyYAML-5.1-cp36-cp36m-win_amd64.whl
+Collecting chardet (from aiohttp<1.1.0,>=1.0.0->discord.py[voice]->-r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/bc/a9/01ffebfb562e4274b6487b4bb1ddec7ca55ec7510b22
+e4c51f14098443b8/chardet-3.0.4-py2.py3-none-any.whl
+Collecting multidict>=2.0 (from aiohttp<1.1.0,>=1.0.0->discord.py[voice]->-r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/d6/24/012ed356cdb196d547f7b53276e3e1ec528bdc09ee78
+982e6e3cb08e205f/multidict-4.5.2-cp36-cp36m-win_amd64.whl
+Collecting async_timeout (from aiohttp<1.1.0,>=1.0.0->discord.py[voice]->-r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/e1/1e/5a4441be21b0726c4464f3f23c8b19628372f606755a
+9d2e46c187e65ec4/async_timeout-3.0.1-py3-none-any.whl
+Collecting six (from PyNaCl==1.0.1->discord.py[voice]->-r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/73/fb/00a976f728d0d1fecfe898238ce23f502a721c0ac0ec
+fedb80e0d88c64e9/six-1.12.0-py2.py3-none-any.whl
+Collecting cffi>=1.1.0 (from PyNaCl==1.0.1->discord.py[voice]->-r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/3f/57/e1ba9f697f597cffa35a473c8ad8014b6028f034bdf4
+d9a91d387cef300e/cffi-1.12.2-cp36-cp36m-win_amd64.whl
+Collecting urllib3<1.25,>=1.21.1 (from requests->imgurpython->-r requirements.txt (line 4))
+  Using cached https://files.pythonhosted.org/packages/62/00/ee1d7de624db8ba7090d1226aebefab96a2c71cd5cfa
+7629d6ad3f61b79e/urllib3-1.24.1-py2.py3-none-any.whl
+Collecting idna<2.9,>=2.5 (from requests->imgurpython->-r requirements.txt (line 4))
+  Using cached https://files.pythonhosted.org/packages/14/2c/cd551d81dbe15200be1cf41cd03869a46fe7226e7450
+af7a6545bfc474c9/idna-2.8-py2.py3-none-any.whl
+Collecting certifi>=2017.4.17 (from requests->imgurpython->-r requirements.txt (line 4))
+  Using cached https://files.pythonhosted.org/packages/60/75/f692a584e85b7eaba0e03827b3d51f45f571c2e793dd
+731e598828d380aa/certifi-2019.3.9-py2.py3-none-any.whl
+Collecting singledispatch (from nltk<4.0,>=3.2->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/c5/10/369f50bcd4621b263927b0a1519987a04383d4a98fb1
+0438042ad410cf88/singledispatch-3.4.0.3-py2.py3-none-any.whl
+Collecting numpy>=1.15.0 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/ed/29/d97b6252591da5f8add0d25eecda296ea72729a0aad7
+998edba1981b47c8/numpy-1.16.2-cp36-cp36m-win_amd64.whl
+Collecting cymem<2.1.0,>=2.0.2 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/c2/93/4b543adf6c0d73ed4e05d92abfb644c2743cd656adc8
+058510fdfac80680/cymem-2.0.2-cp36-cp36m-win_amd64.whl
+Collecting murmurhash<1.1.0,>=0.28.0 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/15/8f/0dad3ca706e31258cf7b9adf40f8d2103444a09dd7d6
+6d46cf6980025c65/murmurhash-1.0.2-cp36-cp36m-win_amd64.whl
+Collecting wasabi<1.1.0,>=0.2.0 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/76/6c/0376977df1ba9f0ec27835d80456d9284c79737cb520
+5649451db1181f01/wasabi-0.2.1-py3-none-any.whl
+Collecting blis<0.3.0,>=0.2.2 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/84/0e/35f8ce00fc3412aa3a888a3d8e040c4c65ccbad8310a
+a2981d3e6f379867/blis-0.2.4-cp36-cp36m-win_amd64.whl
+Collecting thinc<7.1.0,>=7.0.2 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/12/b0/2c6c0f0edd87a3a4ac039bec792a61603233901a6df5
+3e976d746eb86d04/thinc-7.0.4-cp36-cp36m-win_amd64.whl
+Collecting jsonschema<3.0.0,>=2.6.0 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/77/de/47e35a97b2b05c2fadbec67d44cfcdcd09b8086951b3
+31d82de90d2912da/jsonschema-2.6.0-py2.py3-none-any.whl
+Collecting preshed<2.1.0,>=2.0.1 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/a6/c0/3c238c146ed72f92a1cc3771fa3f66091b80d2a8e15b
+7c987912443b7843/preshed-2.0.1-cp36-cp36m-win_amd64.whl
+Collecting srsly<1.1.0,>=0.0.5 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/8b/d8/dd8cd2a1620d5ebbc808cd3937e498ce63a58c220736
+6edba196df093032/srsly-0.0.5-cp36-cp36m-win_amd64.whl
+Collecting plac<1.0.0,>=0.9.6 (from spacy<2.2,>=2.1->chatterbot->-r requirements.txt (line 6))
+  Using cached https://files.pythonhosted.org/packages/9e/9b/62c60d2f5bc135d2aa1d8c8a86aaf84edb719a59c7f1
+1a4316259e61a298/plac-0.9.6-py2.py3-none-any.whl
+Collecting pycparser (from cffi>=1.1.0->PyNaCl==1.0.1->discord.py[voice]->-r requirements.txt (line 2))
+  Using cached https://files.pythonhosted.org/packages/68/9e/49196946aee219aead1290e00d1e7fdeab8567783e83
+e1b9ab5585e6206a/pycparser-2.19.tar.gz
+Collecting tqdm<5.0.0,>=4.10.0 (from thinc<7.1.0,>=7.0.2->spacy<2.2,>=2.1->chatterbot->-r requirements.tx
+t (line 6))
+  Using cached https://files.pythonhosted.org/packages/6c/4b/c38b5144cf167c4f52288517436ccafefe9dc01b8d1c
+190e18a6b154cd4a/tqdm-4.31.1-py2.py3-none-any.whl
+Installing collected packages: pip, chardet, multidict, async-timeout, aiohttp, websockets, six, pycparse
+r, cffi, PyNaCl, discord.py, youtube-dl, urllib3, idna, certifi, requests, imgurpython, TinyTag, python-d
+ateutil, pytz, singledispatch, nltk, sqlalchemy, numpy, cymem, murmurhash, wasabi, blis, tqdm, srsly, pla
+c, preshed, thinc, jsonschema, spacy, pint, mathparse, pymongo, pyyaml, chatterbot
+  Running setup.py install for aiohttp ... done
+  Running setup.py install for pycparser ... done
+  Running setup.py install for discord.py ... done
+  Running setup.py install for imgurpython ... done
+  Running setup.py install for TinyTag ... done
+  Running setup.py install for nltk ... done
+  Running setup.py install for sqlalchemy ... done
+Successfully installed PyNaCl-1.0.1 TinyTag-1.0.0 aiohttp-1.0.5 async-timeout-3.0.1 blis-0.2.4 certifi-20
+19.3.9 cffi-1.12.2 chardet-3.0.4 chatterbot-1.0.5 cymem-2.0.2 discord.py-0.16.12 idna-2.8 imgurpython-1.1
+.7 jsonschema-2.6.0 mathparse-0.1.2 multidict-4.5.2 murmurhash-1.0.2 nltk-3.4 numpy-1.16.2 pint-0.9 pip-1
+9.0.3 plac-0.9.6 preshed-2.0.1 pycparser-2.19 pymongo-3.7.2 python-dateutil-2.7.5 pytz-2018.9 pyyaml-5.1
+requests-2.21.0 singledispatch-3.4.0.3 six-1.12.0 spacy-2.1.3 sqlalchemy-1.2.18 srsly-0.0.5 thinc-7.0.4 t
+qdm-4.31.1 urllib3-1.24.1 wasabi-0.2.1 websockets-3.4 youtube-dl-2019.4.1
+
+Requirements setup completed.
+Press enter to continue.

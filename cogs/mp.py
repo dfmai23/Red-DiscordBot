@@ -14,6 +14,7 @@ import xml.etree.ElementTree as etree
 import xml.dom.minidom
 import re           #re.compile() and pattern matching
 import youtube_dl
+import time
 
 from tinytag import TinyTag as TTag
 from .utils.chat_formatting import *
@@ -368,7 +369,8 @@ class Music_Player:
         elif onoff == 'off':
             pl.repeat = False
         else: #display repeat status
-            await self.bot.say('Repeat is ' + ('on' if pl.repeat==True else 'off'))
+            #await self.bot.say('Repeat is ' + ('on' if pl.repeat==True else 'off'))
+            await self.bot.say('Repeat is ' + ('on' if pl.repeat == True else 'off'))
             return
         pl.set_repeat()
         await self.bot.say("Repeat set to %s!~" % onoff)
@@ -415,7 +417,7 @@ class Music_Player:
         server = ctx.message.server
         await self.bot.say("Loading playlist please wait!~")
         pl_loaded = self.load_pl(server, pl)
-        if pl_loaded == 1:
+        if pl_loaded == None:
             await self.bot.say("Can't find playlist to load!~")
             return
         #self.mp_reload(server)
@@ -423,7 +425,7 @@ class Music_Player:
         self.mp_start(server, self.playlists[server.id].list[0])    #autoplay
 
     @commands.command(pass_context=True)
-    async def delete_playlist(self, ctx, pl_name):        #deletes by playlist filename bar ext
+    async def delete_playlist(self, ctx, *, pl_name):        #deletes by playlist filename bar ext
         """Deletes the specified playlist"""
         server = ctx.message.server
         pl_path = playlist_path + '\\' + server.id
@@ -452,6 +454,7 @@ class Music_Player:
                 await self.bot.say("Already connected to your channel!~")
                 return
             await voice_client.disconnect()
+
         await self.bot.join_voice_channel(channel)          #joins owners voice channel only
         self.mp_reload(server)
 
@@ -460,16 +463,18 @@ class Music_Player:
     async def leave_vc(self, ctx):
         """Leave voice channel"""
         server = ctx.message.server
+        print("Leaving voice channel of " + server.name)
 
         if self.bot.is_voice_connected(server):
             voice_client = self.bot.voice_client_in(server)
             await voice_client.disconnect()
+        else:
+            print("Unable to leave voice channel!")
 
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
     async def rejoin(self, ctx):
         """Rejoin voice channel"""
-        #TODO make bot rejoin its own vc
         server = ctx.message.server
         author = ctx.message.author
         voice_client = self.bot.voice_client_in(server)
@@ -479,9 +484,11 @@ class Music_Player:
         self.mp_reload(server)
 
     @commands.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
     async def stat(self, ctx):
         """DEBUG: media player info debug"""
         server = ctx.message.server
+        print("----------FN stat()----------")
         vc = self.bot.voice_client_in(server)
         channel = vc.channel
         mp = vc.music_player
@@ -490,8 +497,9 @@ class Music_Player:
         #str = music_cache_path + '%(extractor)s' + '-' + '%(exts)s'
 
         print(server.id, server.name)
-        print(channel.id, channel.name)
+        print('  ' + channel.id, channel.name)
 
+        print('playlist name: ' + pl.title)
         print("playlist size: " + str(len(pl.list)))
         print("playlist now playing: " + pl.now_playing.title)
         print('playlist current index: ' + str(pl.cur_i))
@@ -525,9 +533,12 @@ class Music_Player:
 
     def mp_start(self, server, audio):  #audio=song object
         voice_client = self.bot.voice_client_in(server)
+        # print (self.bot.is_voice_connected(server))
+        # print(voice_client)
         options = '-b:a 64k -bufsize 64k'
         voice_client.music_player = voice_client.create_ffmpeg_player(audio.path, options=options)
         voice_client.music_player.volume = self.server_settings[server.id]["VOLUME"]
+
         self.states[server.id] = State.PLAYING
         self.playlists[server.id].now_playing = audio
 
@@ -537,7 +548,7 @@ class Music_Player:
             self.playlists[server.id].cur_i = self.playlists[server.id].get_i(audio)   #accounts for skipping and going back
         print('Playing:', audio.path)
         voice_client.music_player.start()
-        #self.bot.loop.create_task(self.set_game(audio))
+        self.bot.loop.create_task(self.set_game(audio))
 
     def mp_stop(self, server):
         music_player = self.get_mp(server)
@@ -614,6 +625,7 @@ class Music_Player:
 
     async def get_nxt_song(self, server):
         pl = self.playlists[server.id]
+        # if pl.repeat
         if pl.order[pl.cur_i] == None:  #reached end of playlist
             return None
 
@@ -666,12 +678,17 @@ class Music_Player:
         -processes the playlist """
     def load_pl(self, server, playlist_name, **kwargs):          #** = forces keyword arg in caller
         server_cfg = self.server_settings[server.id]
+        print("server_cfg:" + str(server_cfg))
         playlist = Playlist(server.id, server_cfg["REPEAT"], server_cfg["SHUFFLE"])   #create empty playlist
         try:
             self.mp_stop(server)
         except:
             pass
         self.playlists[server.id] = playlist.load(playlist_name, server, **kwargs)
+
+        if self.playlists[server.id] == None:
+            return None
+        # self.playlists[server.id].view()
 
     async def load_url_pl(self, server, info, playlist):     #returns a list of Songs
         url_playlist = []
@@ -747,7 +764,7 @@ class Music_Player:
             for server_id in self.playlists:             #returns the key for each playlist
                 if len(self.playlists[server_id].list) == 0:     #do nothing if playlist empty
                     continue        #skip rest of loop
-                #full concurrency, create task for each server
+                #full concurrency, creates task for each server
                 tasks.append(self.bot.loop.create_task(self.playlist_manager(server_id)))
             completed = [t.done() for t in tasks]
             while not all(completed):
@@ -769,7 +786,7 @@ class Music_Player:
                 print(server.id, server.name)
                 next_song = await self.get_nxt_song(server)
                 if next_song == None:  #repeat off, end of playlist
-                    print('Next song is NoneType')
+                    print('repeat off, Next song is NoneType')
                     pass
                 else:
                     self.mp_start(server, next_song)
@@ -795,7 +812,7 @@ class Music_Player:
 
     """————————————————————MP Initialization's————————————————————"""
     def init_settings(self):
-        print('————————————————————` Media Player————————————————————')
+        print('----------Media Player----------')
         print('Loading settings')
         self.settings = json.load(open(config_path, 'r'))
         self.server_settings = self.settings["SERVER_SETTINGS"]
@@ -835,16 +852,22 @@ class Music_Player:
 
     async def init_autojoin(self):
         print('Autojoining Channels')
+        # for cid in self.settings["AUTOJOIN_CHANNELS"]:
+        #     print("channels: " + cid)
+        # print("autojoin: " + str(self.settings["AUTOJOIN"]))
         states = []
-        if self.settings["AUTOJOIN"] == True:
+        if self.settings["AUTOJOIN"] is True:
             try:
                 for c_id in self.settings["AUTOJOIN_CHANNELS"]:
                     channel= self.bot.get_channel(c_id) #channel to join
                     server = channel.server
                     try:
-                        await self.bot.join_voice_channel(channel)
-                        print('  Joining channel:', server.id, server.name, channel.id, channel.name)
+                        voice_client = await self.bot.join_voice_channel(channel)
+                        print("Voice Client: " + voice_client.user.name)
+                        print('  Joining channel:', server.id, server.name, ', ', channel.id, channel.name)
                         #await self.bot.send_message('Hi!~')
+                    except Exception as e:
+                        print("Exception: " + str(e))
                     except:
                         print('  Already in channel, skipping:', server.id, server.name, ', ', channel.id, channel.name)
 
@@ -853,7 +876,8 @@ class Music_Player:
                         #self.mp_pause(server)
                     except:
                         print('Empty playlist, skipping autoplay')
-            except:
+            except Exception as e:
+                print("Exception: " + str(e))
                 print("Cannot join channels, try reloading cog after initial start!~")
 #class Music Player
 

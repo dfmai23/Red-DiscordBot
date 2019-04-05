@@ -20,12 +20,12 @@ author_name = 'Greedie_Bot'
 
 class Playlist:
     def __init__(self, server_id, repeat, shuffle):
-        self.title =  'Now Playing'
-        self.list = []          #current playlist for each server
-        self.now_playing = None
+        self.title =  'Default Playlist'
+        self.list = []          #current playlist of songs for each server
+        self.now_playing = None #current playing song
         self.cur_i = -1;        #current/now playing index
         self.order = []         #for when list is shuffled(or not)
-        self.server_id = server_id  #id of server that playlist belongs tof
+        self.server_id = server_id  #id of server that playlist belongs to
         self.repeat = repeat
         self.shuffle = shuffle
 
@@ -93,12 +93,17 @@ class Playlist:
     def view(self):
         playlist = []
         temp_playlist = ""
+
+        print("----------FN playlist.py view()----------")
+        print('playlist name: ' + self.title)
+        print("playlist length: " + str(len(self.list)))
+
         for i, song in enumerate(self.list):   #enumerate for index
-            print(str(i), song.title)
+            print('  ' + str(i), song.title)    #DEBUG CONSOLE
             if len(temp_playlist) > MAX_CHAR_LIMIT: #discord max message limit
                 playlist.append(temp_playlist)
                 temp_playlist = ""
-            song_display = str(i)+'. ' + song.display()
+            song_display = str(i)+ '. ' + song.display()
             if i == self.cur_i:            #currently playing song
                 cur_song = song_display
             temp_playlist += (song_display + '\n')
@@ -200,14 +205,21 @@ class Playlist:
             self.save(playlist_name, server)
             return self
         elif pl_path_full == None:                  #couldnt find playlist from command
-            return 1
+            return None
         tree = xml.etree.ElementTree.parse(pl_path_full)
         root = tree.getroot()
-        #print(root[0])     #<head/>
-        #print(root[1])     #<body/>
-        #print(root[1][0])  #<seq/>
-        self.title = root[0][2].text #title
 
+        # for child in root:
+        #     print(child.tag, child.attrib)
+        # print(root.tag,  root.attrib)
+        #
+        # print(root[0])     #<head/>
+        # print(root[1])     #<body/>
+        # print(root[1][0])  #<seq/>
+        # print("Title: " + root[0][3].text)
+        self.title = root[0][3].text #title
+
+        print("playlist load title: " + self.title)
         for i, media in enumerate(root[1][0]):
             media_src = media.get('src')
             media_url = media.get('url')

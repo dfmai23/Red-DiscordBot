@@ -2,25 +2,40 @@
 """
   implement coroutine inits, self.playlists, and self.states
 
+
+functionality
+————————————————————————————————————————————————————————————————————————————————————————————————————
+
 error checking in logs
  
-config.json
-	make server specific settings only 
-	rename to global config and server config
-	move default_cfg form paths to config.json
+make bot rejoin its own vc
 
+fix shuffle repeat?? move to media player??
+repeat current song
+
+
+refactor
+————————————————————————————————————————————————————————————————————————————————————————————————————
 move startup checks to after joinig server so dont have to reload
 fix coroutine hang crash
-fix shuffle repeat?? move to media player??
 
 add to readme music player
 	give descriptions for bat files
+
+
+
+
+
+
 
 
 chatterbot
 text to speech - google assistant?
 
 
+
 daily wp and posts
+	using wallpaper master db
+
 
 embed gifs

@@ -12,6 +12,7 @@ def check_cfg():
         print("Creating default music player config.json")
         config_file = open(config_path, 'w')
         json.dump(default_cfg, config_file, indent=4)
+        print("Saved default config to JSON")
     if not os.path.isdir(music_cache_path):
         print('Creating music cache folder')
         os.makedirs(music_cache_path)
