@@ -2,14 +2,13 @@ import discord
 from discord.ext import commands
 
 
-class Post:
+class GIF:
     def __init__(self, bot):
         self.bot = bot
 
 
 
 
-
 def setup(bot):
-    dailypost = Post(bot)
-    bot.add_cog(dailypost)
+    gif = GIF(bot)
+    bot.add_cog(gif)

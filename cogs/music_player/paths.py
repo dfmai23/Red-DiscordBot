@@ -3,6 +3,7 @@
 default_cfg = { "AUTOJOIN": True,
                 "AUTOJOIN_CHANNELS": [],
                 "DEFAULT_SERVER_SETTINGS": {
+                        "server_name": "undefined",
                         "VOLUME": 0.5,
                         "REPEAT": True,
                         "SHUFFLE": False,
@@ -16,13 +17,13 @@ default_cfg = { "AUTOJOIN": True,
 config_path = 'data\music\config.json'
 default_playlist = 'Default Playlist.xml'
 
-music_cache_path = 'data\music\cache'
-music_local_path = 'D:\Music'
+music_cache_path = 'data\music\cache\\'
+music_local_path = 'D:\Music\\'
 #music_local_path = '\\' + '\\' + 'MAI-PC\Music'
 
-playlist_path = 'data\music\playlists'
-playlist_local_path = 'D:\Music\Playlists'
-#playlist_local_path = '\\\\MAI-PC\Music\Playlists'
+playlist_path = 'data\music\playlists\\'
+playlist_local_path = 'D:\Music\Playlists\\'
+#playlist_local_path = '\\\\MAI-PC\Music\Playlists\\'
 
 MAX_CHAR_LIMIT = 1900
 

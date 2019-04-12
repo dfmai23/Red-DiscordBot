@@ -14,7 +14,6 @@ import xml.etree.ElementTree as etree
 import xml.dom.minidom
 import re           #re.compile() and pattern matching
 import youtube_dl
-import time
 
 from tinytag import TinyTag as TTag
 from .utils.chat_formatting import *
@@ -47,7 +46,7 @@ class Music_Player:
 
     """————————————————————Commands Music Player————————————————————"""
     @commands.command(pass_context=True)
-    async def play(self, ctx, *, song_or_url=None): # *args = positional only varargs
+    async def play(self, ctx, *, song_or_url=None): # * = positional forced-keyword only varargs (song_or_url in this case)
         """ Plays/resumes current song or plays new song """
 
         server = ctx.message.server
@@ -286,7 +285,7 @@ class Music_Player:
         mp = self.get_mp(server)
 
         if name_or_index.isnumeric():
-            i = int(name_or_index)
+            i = int(name_or_index) - 1
             if (i + 1) > len(pl.list):
                 await self.bot.say('Index out of range!~')
                 return
@@ -301,7 +300,7 @@ class Music_Player:
         song = pl.list[i]
         self.mp_stop(server)
         self.mp_start(server, song)
-        song_display = str(i) + ". " + song.display()
+        song_display = str(i+1) + ". " + song.display()
         await self.bot.say('Jumping to song: ' + box(song_display))
 
     @commands.command(pass_context=True)
@@ -357,23 +356,29 @@ class Music_Player:
             await self.bot.say('Use "local" parameter to view local playlists!~')
 
     @commands.command(pass_context=True)
-    async def repeat(self, ctx, onoff=None):
+    async def repeat(self, ctx, repeat_state=None):
         """Set/display repeat"""
         server = ctx.message.server
         pl = self.playlists[server.id]
-        if not (onoff in {'on', 'off', None}):
+        repeat_display = None;
+        if not (repeat_state in {'on', 'off', '0', '1', 'one', None}):
             await self.bot.say('Parameter must be "on" or "off"!~')
             return
-        elif onoff == 'on':
+        elif repeat_state == 'on' or repeat_state == '1':
             pl.repeat = True
-        elif onoff == 'off':
+            repeat_display = 'on'
+        elif repeat_state == 'off'or repeat_state == '0':
             pl.repeat = False
-        else: #display repeat status
+            repeat_display = 'off'
+        elif repeat_state == 'one' :
+            pl.repeat = 'one'
+            repeat_display = 'repeating current song'
+        else: #display repeat status no params in command
             #await self.bot.say('Repeat is ' + ('on' if pl.repeat==True else 'off'))
-            await self.bot.say('Repeat is ' + ('on' if pl.repeat == True else 'off'))
+            await self.bot.say('Repeat is ' + repeat_display)
             return
         pl.set_repeat()
-        await self.bot.say("Repeat set to %s!~" % onoff)
+        await self.bot.say("Repeat set to %s!~" % repeat_display)
 
     @commands.command(pass_context=True)
     async def shuffle(self, ctx, onoff=None):
@@ -625,13 +630,15 @@ class Music_Player:
 
     async def get_nxt_song(self, server):
         pl = self.playlists[server.id]
-        # if pl.repeat
-        if pl.order[pl.cur_i] == None:  #reached end of playlist
+        if pl.order[pl.cur_i] == None and pl.repeat == 'one':  #reached end of playlist
             return None
 
-        #print('cur_i: %d \tnext_i: %d' % (pl.cur_i, pl.order[pl.cur_i]))
-        next_song_i = pl.order[pl.cur_i]
+        if pl.repeat == 'one':
+            next_song_i = pl.cur_i
+        else:
+            next_song_i = pl.order[pl.cur_i]
         next_song = pl.list[next_song_i]
+        print('cur_i: %d \tnext_i: %d' % (pl.cur_i, next_song_i))
         song_file = os.path.basename(next_song.path)
         base_path = os.path.dirname(next_song.path)
         print('Getting next song:', base_path+'\\'+song_file)
@@ -736,8 +743,13 @@ class Music_Player:
         elif reply.content.lower() == 'no' or reply.content.lower() == 'n':
             return 'no'
 
+    def save_config(self):      #save config for current server
+        config_file = open(config_path, 'w')
+        json.dump(self.settings, config_file, indent=4) #in:self.settings, out:config_file
+        print('Saving config for servers')
 
-    """————————————————————Management————————————————————"""
+
+    """————————————————————Watchers————————————————————"""
 
     #saves playlists and configs
     async def shutdown_watcher(self, message):  #catch at message before it actually does anything
@@ -783,7 +795,7 @@ class Music_Player:
         pl = self.playlists[server.id]
         try:
             if mp.is_done() and self.states[server.id] != State.STOPPED:    #stopped playing music
-                print(server.id, server.name)
+                #print(server.id, server.name)
                 next_song = await self.get_nxt_song(server)
                 if next_song == None:  #repeat off, end of playlist
                     print('repeat off, Next song is NoneType')
@@ -804,11 +816,6 @@ class Music_Player:
                     print('Channel empty, stopping music:', server.name, channel.name)
             await asyncio.sleep(5)  #stops music when channel is empty
 
-    def save_config(self):      #save config for current server
-        config_file = open(config_path, 'w')
-        json.dump(self.settings, config_file, indent=4) #in:self.settings, out:config_file
-        print('Saving config for servers')
-
 
     """————————————————————MP Initialization's————————————————————"""
     def init_settings(self):
@@ -816,12 +823,14 @@ class Music_Player:
         print('Loading settings')
         self.settings = json.load(open(config_path, 'r'))
         self.server_settings = self.settings["SERVER_SETTINGS"]
-        server_cfg = self.settings["DEFAULT_SERVER_SETTINGS"]
+        default_server_cfg = self.settings["DEFAULT_SERVER_SETTINGS"]
+        #print("default_server_cfg: " + str(default_server_cfg))
 
         for server in self.bot.servers:
             if not server.id in self.server_settings:   #create new default server settings
                 print(' Server settings for %s %s not found, creating defaults' % (server.id, server.name))
-                self.server_settings[server.id] = server_cfg
+                self.server_settings[server.id] = default_server_cfg
+                self.server_settings[server.id]["server_name"] = server.name
         self.save_config()
 
     """Initializes playlists by:

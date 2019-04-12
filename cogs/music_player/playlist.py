@@ -24,7 +24,7 @@ class Playlist:
         self.list = []          #current playlist of songs for each server
         self.now_playing = None #current playing song
         self.cur_i = -1;        #current/now playing index
-        self.order = []         #for when list is shuffled(or not)
+        self.order = []         #for when list is shuffled(or not), is index for NEXT song
         self.server_id = server_id  #id of server that playlist belongs to
         self.repeat = repeat
         self.shuffle = shuffle
@@ -97,13 +97,13 @@ class Playlist:
         print("----------FN playlist.py view()----------")
         print('playlist name: ' + self.title)
         print("playlist length: " + str(len(self.list)))
-
+        print('repeat: %s  shuffle: %s' % (self.repeat, self.shuffle))
         for i, song in enumerate(self.list):   #enumerate for index
             print('  ' + str(i), song.title)    #DEBUG CONSOLE
             if len(temp_playlist) > MAX_CHAR_LIMIT: #discord max message limit
                 playlist.append(temp_playlist)
                 temp_playlist = ""
-            song_display = str(i)+ '. ' + song.display()
+            song_display = str(i+1)+ '. ' + song.display()
             if i == self.cur_i:            #currently playing song
                 cur_song = song_display
             temp_playlist += (song_display + '\n')
@@ -112,12 +112,13 @@ class Playlist:
         return [cur_song, playlist, settings]
 
     def set_repeat(self):       #check if repeat and updates order accordingly
-        if self.repeat:     #finds index which points to i=None
+        if self.repeat is True:     #finds index which points to i=None
             i = self.order.index(None)
             self.order[i] = 0
-        else:       #repeat off
+        elif self.repeat is False:       #repeat off
             i = self.order.index(0)
             self.order[i] = None
+        #else repeat 'one', current song only, no change
 
     def set_shuffle(self):
         if self.shuffle:        #have to make it noncyclic

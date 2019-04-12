@@ -5,13 +5,11 @@
 
 functionality
 ————————————————————————————————————————————————————————————————————————————————————————————————————
+play url playlist as the new now playing list
 
 error checking in logs
  
 make bot rejoin its own vc
-
-fix shuffle repeat?? move to media player??
-repeat current song
 
 
 refactor
@@ -24,18 +22,12 @@ add to readme music player
 
 
 
-
-
-
-
-
 chatterbot
 text to speech - google assistant?
 
 
 
-daily wp and posts
-	using wallpaper master db
 
+daily posts
 
 embed gifs
