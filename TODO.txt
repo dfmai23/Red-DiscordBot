@@ -11,6 +11,11 @@ error checking in logs
  
 make bot rejoin its own vc
 
+check valid channel when setting post
+
+move wallpaper and daily to server folders
+
+set game: include artist if there is one
 
 refactor
 ————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -20,14 +25,9 @@ fix coroutine hang crash
 add to readme music player
 	give descriptions for bat files
 
+split config_path to path and file in music player
+
 
 
 chatterbot
 text to speech - google assistant?
-
-
-
-
-daily posts
-
-embed gifs

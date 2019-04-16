@@ -1,3 +1,7 @@
+https://regex101.com/
+
+music player
+————————————————————————————————————————————————————————————————————————————————————————————————————
 `dl https://www.youtube.com/watch?v=Iets6iLm3QY
 `add https://www.youtube.com/watch?v=Iets6iLm3QY
 `add https://soundcloud.com/else-official/else-zephyr
@@ -13,10 +17,28 @@ copyright
 "data\music\cache\Thomas Vent - Listen To Your Heart-youtube-BLyVf1qeWR8.m4a"
 
 
+
+dailypost
+————————————————————————————————————————————————————————————————————————————————————————————————————
+`set_post 266047323166081024 test hello there
+
+
+gif
+————————————————————————————————————————————————————————————————————————————————————————————————————
+`set_gif test https://i.imgur.com/5k5X7Sr.gifv
+`set_gif test http://i.imgur.com/6n9fHDw.gif
+
+https://gfycat.com/oilygrimycobra.webm
+https://zippy.gfycat.com/OilyGrimyCobra.webm
+http://i.imgur.com/6n9fHDw.gif
+https://i.imgur.com/5k5X7Sr.gifv
+
+wallpaper
+————————————————————————————————————————————————————————————————————————————————————————————————————
+
 `reload dailywp
 `view_dbcats
 `set_cats Main Eva test
-
 
 SELECT name FROM main.CategoriesTbl ORDER BY sorting ASC LIMIT 0, 49999;
 

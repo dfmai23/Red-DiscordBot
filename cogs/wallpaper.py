@@ -14,28 +14,17 @@ import datetime
 from .utils.chat_formatting import *
 from .utils import checks
 
-server_cfg = {"DAILY_CHANNELS": {},
-                "SOURCES": {},   #channel id, source pair
-                "INIT_TIME": "12:00",
-                "INTERVAL": "24:00",
-
-                # "CHANNELS_SOURCES": {
-                #     "channel_name": "undefined"
-                #     "SOURCES:"
-                # },      #channel id, source pair
-            }
-
+default_server_cfg = {
+    "server_name": "undefined",
+    "CHANNEL": "undefined",     #channel to post to
+    "CHANNEL_NAME": "undefined",
+    "TIME_POST": "12:00",       #default time to post wp everyday
+    "CATEGORIES": []
+}
 
 default_cfg = {
-                "DEFAULT_SERVER_SETTINGS": {
-                    "server_name": "undefined",
-                    "CHANNEL": "undefined",     #channel to post to
-                    "CHANNEL_NAME": "undefined",
-                    "TIME_POST": "12:00",       #default time to post wp everyday
-                    "CATEGORIES": []
-                },
-                "SERVER_SETTINGS": {}
-            }
+    "SERVER_SETTINGS": {}
+}
 
 config_path = 'data\wallpaper\\'
 config_file = 'config.json'
@@ -54,16 +43,15 @@ class Wallpaper:
 
     @checks.mod_or_permissions(administrator=True)
     @commands.command(pass_context=True)
-    async def set_channel(self, ctx, channel_id):
+    async def set_wpchannel(self, ctx, channel_id):
         """ Set the channel to schedule posts to """
         server = ctx.message.server
         channel = server.get_channel(channel_id)
-
-        print("channel: " + channel.id)
-        print("type: " + str(type(channel.id)))
+        print("channel: %s  type: %s " % (channel.id, str(type(channel.id))))
 
         self.server_settings[server.id]["CHANNEL"] = channel.id
         self.server_settings[server.id]["CHANNEL_NAME"] = channel.name
+        self.save_config()
         await self.bot.say("Assigned channel: %s to post daily wallpapers!~" % channel.name)
 
     @commands.command(pass_context=True)
@@ -182,6 +170,7 @@ class Wallpaper:
         else:
             await self.bot.say('Please add either \'db\' or \'selected\'')
 
+    @checks.mod_or_permissions(administrator=True)
     @commands.command(pass_context=True)
     async def save_cats(self, ctx):
         """ Save current wallpaper categories"""
@@ -268,7 +257,7 @@ class Wallpaper:
     @commands.command(pass_context=True)
     async def wpstat(self, ctx):
         """ DEBUG, show settings """
-        print("--------------------STAT--------------------")
+        print("--------------------WP STAT--------------------")
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(self.settings)
 
@@ -408,16 +397,31 @@ class Wallpaper:
 
     """————————————————————INIT————————————————————"""
     def init_settings(self):
-        print('Loading dailybot settings')
-        if not os.path.isdir(config_path):
+        print('--------------------Wallpaper--------------------')
+        print('Loading WallpaperBot settings')
+        fullpath = config_path + config_file
+        if not os.path.isdir(config_path):  #check directory
+            print('config path: \'%s\' not found creating new one' % config_path)
             os.makedirs(config_path)
-        self.settings = json.load(open(config_path + config_file, 'r'))
+        if not os.path.isfile(fullpath):    #check file
+            file = open(fullpath, 'w')
+            file.close()
+        if os.path.getsize(fullpath) == 0:  #check if file empty
+            print('config SETTINGS in file: \'%s\' not found creating them' % fullpath)
+            file = open(fullpath, 'w')
+            self.settings = default_cfg
+            file.close()
+            self.save_config()
+
+        file = open(fullpath, 'r+')
+        self.settings = json.load(file)
         self.server_settings = self.settings["SERVER_SETTINGS"]
+        file.close()
 
         for server in self.bot.servers:
             if not server.id in self.server_settings:   #create new default server settings
                 print(' Server settings for %s %s not found, creating defaults' % (server.id, server.name))
-                self.server_settings[server.id] = default_cfg["DEFAULT_SERVER_SETTINGS"]
+                self.server_settings[server.id] = default_server_cfg
                 self.server_settings[server.id]["server_name"] = server.name
         self.save_config()
 

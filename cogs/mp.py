@@ -177,33 +177,6 @@ class Music_Player:
 
     """————————————————————_Commands Playlist————————————————————"""
     @commands.command(pass_context=True)
-    @checks.mod_or_permissions(administrator=True)
-    async def pinfo(self, ctx, url):
-        """ DEBUG: Playlist URL info debug"""
-        server = ctx.message.server
-        info = await self.downloader.extract(self.bot.loop, url, download=False)
-        if info != None:
-            for key in info:
-                if key == 'formats':
-                    print(key, info[key])
-                    continue
-                """
-                if key == 'entries':
-                    for entry in info['entries']:
-                        for key2 in entry:
-                            print(key2, entry[key2])
-                """
-                print(key, info[key])
-                """
-                if key == 'formats':
-                    ext = info[key][0]['ext']   #multiple m4a links, 0=pull first one
-                    url = info[key][0]['url']
-                    print(ext, url)
-                """
-        else:
-            print('Not able to get info')
-
-    @commands.command(pass_context=True)
     async def add(self, ctx, *, song_or_url):   #*, = positional args as single str
         """ Add a song (local or URL) to the playlist """
         await self.add_song(ctx, song_or_url)
@@ -220,8 +193,8 @@ class Music_Player:
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
         r'localhost|' #localhost...
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
-        r'(?::\d+)?' # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        r'(?::\d+)?' # port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)  # sub-path
 
         if is_url.match(url):   #download or find in cache
             info = await self.downloader.extract(self.bot.loop, url, download=False, process=False) #process=F less info, alot faster
@@ -490,7 +463,34 @@ class Music_Player:
 
     @commands.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
-    async def stat(self, ctx):
+    async def pinfo(self, ctx, url):
+        """ DEBUG: Playlist URL info debug"""
+        server = ctx.message.server
+        info = await self.downloader.extract(self.bot.loop, url, download=False)
+        if info != None:
+            for key in info:
+                if key == 'formats':
+                    print(key, info[key])
+                    continue
+                """
+                if key == 'entries':
+                    for entry in info['entries']:
+                        for key2 in entry:
+                            print(key2, entry[key2])
+                """
+                print(key, info[key])
+                """
+                if key == 'formats':
+                    ext = info[key][0]['ext']   #multiple m4a links, 0=pull first one
+                    url = info[key][0]['url']
+                    print(ext, url)
+                """
+        else:
+            print('Not able to get info')
+
+    @commands.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
+    async def mpstat(self, ctx):
         """DEBUG: media player info debug"""
         server = ctx.message.server
         print("----------FN stat()----------")
@@ -590,7 +590,7 @@ class Music_Player:
         r'localhost|' #localhost...
         r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
         r'(?::\d+)?' # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)  #sublink (.com/... including /),
 
         if is_url.match(song_or_url):   #download or find in cache
             url = song_or_url
@@ -606,7 +606,7 @@ class Music_Player:
             song = Song(info['title'], info['duration'], song_path_full, info['webpage_url'])
         else:    #find local file in library
             name = song_or_url
-            ftype = r'(m4a|mp3|webm)$'  #regular expression, $ = match the end of the string
+            ftype = r'(m4a|mp3|webm)$'  #regex, $ = match the end of the string
             song_path_full = self.find_file(name, music_local_path, ftype)
             if song_path_full == None:  #song not in lib
                 return 3
@@ -819,8 +819,8 @@ class Music_Player:
 
     """————————————————————MP Initialization's————————————————————"""
     def init_settings(self):
-        print('----------Media Player----------')
-        print('Loading settings')
+        print('--------------------Media Player--------------------')
+        print('Loading music player settings')
         self.settings = json.load(open(config_path, 'r'))
         self.server_settings = self.settings["SERVER_SETTINGS"]
         default_server_cfg = self.settings["DEFAULT_SERVER_SETTINGS"]
@@ -887,7 +887,7 @@ class Music_Player:
                         print('Empty playlist, skipping autoplay')
             except Exception as e:
                 print("Exception: " + str(e))
-                print("Cannot join channels, try reloading cog after initial start!~")
+                print("Cannot join channels, try reloading cog after initial start!~\n")
 #class Music Player
 
 
