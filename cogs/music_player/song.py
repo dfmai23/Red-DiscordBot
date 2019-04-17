@@ -5,7 +5,7 @@ class Song:
         self.length = length
         self.path = path        #path as unique id
         self.url = url          #url also determines type, local or from url
-        self.artist = artist    #no url ->no artist, mostly...
+        self.artist = artist    #if no url -> no artist mostly...
 
     def display(self):   #formats song chat printing, mainly checking if is a urlsong
         song_display = self.title

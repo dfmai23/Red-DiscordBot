@@ -1,5 +1,7 @@
 https://regex101.com/
 
+
+
 music player
 ————————————————————————————————————————————————————————————————————————————————————————————————————
 `dl https://www.youtube.com/watch?v=Iets6iLm3QY
@@ -26,12 +28,22 @@ dailypost
 gif
 ————————————————————————————————————————————————————————————————————————————————————————————————————
 `set_gif test https://i.imgur.com/5k5X7Sr.gifv
-`set_gif test http://i.imgur.com/6n9fHDw.gif
+`set_gif test https://i.imgur.com/6n9fHDw.gif
+`set_gif awoo https://zippy.gfycat.com/OilyGrimyCobra.webm
 
-https://gfycat.com/oilygrimycobra.webm
+https://gfycat.com/oilygrimycobra
 https://zippy.gfycat.com/OilyGrimyCobra.webm
-http://i.imgur.com/6n9fHDw.gif
+https://i.imgur.com/6n9fHDw.gif
 https://i.imgur.com/5k5X7Sr.gifv
+https://i.imgur.com/5k5X7Sr.mp4
+
+channel dev
+266047323166081024
+
+not working gif
+568127755179261961	
+working gif
+568127946477535233
 
 wallpaper
 ————————————————————————————————————————————————————————————————————————————————————————————————————

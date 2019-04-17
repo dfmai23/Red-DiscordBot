@@ -39,7 +39,6 @@ class Wallpaper:
         self.settings = {}          #global settings
         self.server_settings= {}    #server specific settings
 
-    """————————————————————TESTING————————————————————"""
 
     @checks.mod_or_permissions(administrator=True)
     @commands.command(pass_context=True)
@@ -193,7 +192,7 @@ class Wallpaper:
 	    get the image location and post
 	    save the image location to writable db and mark as posted 
 	"""
-    @checks.mod_or_permissions(administrator=True)
+    # @checks.mod_or_permissions(administrator=True)
     @commands.command(pass_context=True)
     async def post_wp(self, ctx):  # *args = positional only varargs
         """ DEBUG, posts a wallpaper """
@@ -238,7 +237,7 @@ class Wallpaper:
 
             filepath = row[2] + '\\' + row[3]
             print('filepath: '+ filepath)
-            # await self.bot.send_file(channel, filepath)
+            await self.bot.send_file(channel, filepath)
             print('posted image: ' + filepath)
 
             #close connections
@@ -266,7 +265,7 @@ class Wallpaper:
         channel = server.get_channel(channel_id)
 
         time_string = time.strftime("%H:%M:%S", time.localtime())
-        print("[%s]----------AUTO POST--------------------" % time_string)
+        print("[%s]----------AUTO WP POST--------------------" % time_string)
         print("posting to:")
         print("server:  %s   name: %s" % (server.id, server.name))
         print("channel: %s   name: %s" % (channel.id, channel.name))
@@ -383,6 +382,13 @@ class Wallpaper:
         csr_write.execute(sql_write, writerow)
 
 
+    """————————————————————Helper Fn's————————————————————"""
+    def save_config(self):      #save config for current server
+        cfg_file = open(config_path+config_file, 'w')
+        json.dump(self.settings, cfg_file, indent=4)
+        print('Saving WallpaperBot config')
+
+
     """————————————————————WATCHERS————————————————————"""
     async def shutdown_watcher(self, message):  #catch at message before it actually does anything
         prefixes = self.bot.settings.prefixes
@@ -391,7 +397,6 @@ class Wallpaper:
             for server in self.bot.servers:
                 print('saving wallpaper settings and categories:', server.id, server.name)
             #self.save_config()
-            # schedstop.set()
             return
 
 
@@ -426,21 +431,15 @@ class Wallpaper:
         self.save_config()
 
     async def init_scheduler(self):
-        print('initializing scheduler')
+        print('\ninitializing wallpaper scheduler')
         scheduler = AsyncIOScheduler()
         for server in self.bot.servers:
-            print("server: %s %s" % (server.id, server.name))
+            print("scheduling server: %s %s" % (server.id, server.name))
             # post_time = self.server_settings[server.id]["TIME_POST"]
             # time= datetime.datetime.strptime(post_time, '%H:%M') #strip using datetime
-            # scheduler.add_job(self.post_auto, 'cron', server, hour=time.hour, minute=time.minute)
+            # scheduler.add_job(self.post_auto, 'cron', [server], hour=time.hour, minute=time.minute)
             scheduler.add_job(self.post_auto, 'interval', [server], seconds=10) #for testing
-            print('scheduling done for server')
         scheduler.start()
-
-    def save_config(self):      #save config for current server
-        cfg_file = open(config_path+config_file, 'w')
-        json.dump(self.settings, cfg_file, indent=4)
-        print('Saving WallpaperBot config')
 
 
 def setup(bot):
@@ -450,6 +449,7 @@ def setup(bot):
     try:
         wp.init_settings()
         # bot.loop.create_task(wp.init_scheduler())
+        bot.add_listener(wp.shutdown_watcher, 'on_message')
     except Exception as e:
         time_string = time.strftime("%H:%M:%S", time.localtime())  # strip using time
         traceback.print_exc()

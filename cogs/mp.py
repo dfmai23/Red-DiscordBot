@@ -44,6 +44,7 @@ class Music_Player:
     #joins voice channel by channel id
     #def autojoin_channel(
 
+
     """————————————————————Commands Music Player————————————————————"""
     @commands.command(pass_context=True)
     async def play(self, ctx, *, song_or_url=None): # * = positional forced-keyword only varargs (song_or_url in this case)
@@ -416,6 +417,16 @@ class Music_Player:
             os.remove(pl_path_full)
             await self.bot.say ("Deleted playlist: %s!~" % pl_name)
 
+    @commands.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
+    async def save_mp(self, ctx):
+        """ Save config and playlists for current server """
+        server = ctx.message.server
+        print('saving music player settings and playlist:', server.id, server.name)
+        pl = self.playlists[server.id]
+        pl.save(default_playlist, server, overwrite=1)
+        self.save_config()
+
 
     """————————————————————Commands Server————————————————————"""
     @commands.command(pass_context=True)
@@ -666,8 +677,15 @@ class Music_Player:
     async def set_game(self, song):
         self.game = list(self.bot.servers)[0].me.game
         status = list(self.bot.servers)[0].me.status
-        game = discord.Game(name=song.title)
+
+        if song.artist == '':
+            gamename = song.title
+        else:
+            gamename = song.title + ' by ' + song.artist
+
+        game = discord.Game(name=gamename)
         await self.bot.change_presence(status=status, game=game)
+
 
         """
         if self._old_game is False:
@@ -758,14 +776,14 @@ class Music_Player:
         message.content in [prefix + 'restart' for prefix in prefixes]):
             for server in self.bot.servers:
                 try:
+                    print('saving music player settings and playlist:', server.id, server.name)
                     pl = self.playlists[server.id]
                     pl.save(default_playlist, server, overwrite=1)
                     self.mp_stop(server)
-                    print('Saving playlist:', server.id, server.name)
                 except:
-                    print('Couldn\'t save playlist:', server.id, server.name)
+                    print('couldn\'t save music player settings:', server.id, server.name)
                     pass
-            #self.save_config()
+            # self.save_config()
             return
 
     #basically asynchronously polls music player to see if its playing or not
@@ -860,7 +878,7 @@ class Music_Player:
             self.games[server.id] = None
 
     async def init_autojoin(self):
-        print('Autojoining Channels')
+        print('\nMedia Player Autojoining Channels')
         # for cid in self.settings["AUTOJOIN_CHANNELS"]:
         #     print("channels: " + cid)
         # print("autojoin: " + str(self.settings["AUTOJOIN"]))
@@ -908,6 +926,5 @@ def setup(bot):
     bot.add_listener(music_player.shutdown_watcher, 'on_message')
     bot.loop.create_task(music_player.playlist_scheduler())
     bot.loop.create_task(music_player.voice_channel_watcher())
-    #bot.loop.create_task(music_player.music_player_watcher())
     print('Starting Music Player with codec: ' + codec)
 #fn setup
