@@ -27,9 +27,9 @@ dailypost
 
 gif
 ————————————————————————————————————————————————————————————————————————————————————————————————————
-`set_gif test https://i.imgur.com/5k5X7Sr.gifv
-`set_gif test https://i.imgur.com/6n9fHDw.gif
-`set_gif awoo https://zippy.gfycat.com/OilyGrimyCobra.webm
+`add_gif test https://i.imgur.com/5k5X7Sr.gifv
+`add_gif test https://i.imgur.com/6n9fHDw.gif
+`add_gif awoo https://zippy.gfycat.com/OilyGrimyCobra.webm
 
 https://gfycat.com/oilygrimycobra
 https://zippy.gfycat.com/OilyGrimyCobra.webm

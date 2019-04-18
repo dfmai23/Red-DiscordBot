@@ -54,7 +54,7 @@ class GIF:
         r'(?:/?(.*\.(gif|webm)?))$', re.IGNORECASE)  #gif sub path
         # r'(?:/?|[/?]\S+)$', re.IGNORECASE)  # any sub-path
         # sub_pattern = r'(webm|gifv)$'
-        sub_pattern = r'(webm)$'
+        sub_pattern = re.compile(r'(webm)$')
 
         match = re.match(is_url, link)
         if match is None:
@@ -64,6 +64,7 @@ class GIF:
 
         if gifname not in gifs:
             #will download the link locally
+            newlink=link
             if match.group(2) != 'gif': #convert webm formats to gif
                 print('link not given in gif format, attempting to convert')
                 newlink = re.sub(sub_pattern, 'gif', link)

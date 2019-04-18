@@ -1,10 +1,12 @@
 *.json
 *.pyc
 __pycache__
-data
+data/
 !data/trivia/*
 !data/audio/playlists/*
 *.exe
 *.dll
-lib
+lib/
 .idea/
+*.sqlite3
+*.pickle

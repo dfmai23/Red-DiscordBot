@@ -10,7 +10,6 @@ error checking in logs
 play url playlist as the new now playing list
 make bot rejoin its own vc
 
-move daily to server folders
 
 check valid channel when setting post
 
@@ -26,7 +25,6 @@ add to readme music player
 	give descriptions for bat files
 
 split config_path to path and file in music player
-
 
 
 chatterbot
