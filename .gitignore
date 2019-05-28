@@ -10,3 +10,4 @@ lib/
 .idea/
 *.sqlite3
 *.pickle
+log/
