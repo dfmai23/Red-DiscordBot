@@ -151,7 +151,7 @@ class Playlist:
         if '.xml' in playlist_name:
             playlist_name = playlist_name.strip('.xml')
 
-        server_pl_path = playlist_path + "\\" + self.server_id
+        server_pl_path = playlist_path + self.server_id
         pl_path_full = self.get_file(playlist_name+'.xml', server_pl_path)
         if  pl_path_full != None and overwrite==0:
             return 1

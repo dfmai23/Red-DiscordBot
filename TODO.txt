@@ -10,11 +10,14 @@ error checking in logs
 play url playlist as the new now playing list
 make bot rejoin its own vc
 
-
 check valid channel when setting post
 
 convert gifv's to gifs
 overwrite option when setting new gif
+
+restart watcher
+
+auto start async commands
 
 refactor
 ————————————————————————————————————————————————————————————————————————————————————————————————————

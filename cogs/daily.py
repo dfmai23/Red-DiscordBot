@@ -5,6 +5,7 @@ import os
 import asyncio
 import json
 import pprint
+import copy
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import time
@@ -119,8 +120,7 @@ class Post:
         channel = server.get_channel(channel_id)
         content = postinfo["CONTENT"]
 
-        time_string = time.strftime("%H:%M:%S", time.localtime())
-        print("[%s]----------AUTO DAILY POST--------------------" % time_string)
+        print("[%s]--------------------AUTO DAILY POST--------------------" % self.get_timeformatted())
         print("posting to:")
         print("server:  %s   name: %s" % (server.id, server.name))
         print("channel: %s   name: %s" % (channel.id, channel.name))
@@ -135,6 +135,9 @@ class Post:
         json.dump(self.settings, cfg_file, indent=4) #in:self.settings, out:file
         print('Saving DailyPostBot config')
 
+    def get_timeformatted(self):
+        return time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime())
+
 
     """————————————————————WATCHERS————————————————————"""
     async def shutdown_watcher(self, message):  #catch at message before it actually does anything
@@ -143,13 +146,13 @@ class Post:
         message.content in [prefix + 'restart' for prefix in prefixes]):
             for server in self.bot.servers:
                 print('saving dailypost settings:', server.id, server.name)
-            #self.save_config()
+            self.save_config()
             return
 
 
     """————————————————————INIT————————————————————"""
     def init_settings(self):
-        print('--------------------Daily Post--------------------')
+        print('[%s]----------Daily Post--------------------' % self.get_timeformatted())
         print('Loading DailyPostBot settings')
         fullpath = config_path + config_file
         if not os.path.isdir(config_path):  #check directory
@@ -173,7 +176,7 @@ class Post:
         for server in self.bot.servers:
             if not server.id in self.server_settings:   #create new default server settings
                 print(' Server settings for %s %s not found, creating defaults' % (server.id, server.name))
-                self.server_settings[server.id] = default_server_cfg
+                self.server_settings[server.id] = copy.deepcopy(default_server_cfg)
                 self.server_settings[server.id]["server_name"] = server.name
         self.save_config()
 
@@ -203,9 +206,9 @@ def setup(bot):
     try:
         dailypost.init_settings()
         bot.loop.create_task(dailypost.init_scheduler())
-        # bot.add_listener(dailypost.shutdown_watcher, 'on_message')
+        bot.add_listener(dailypost.shutdown_watcher, 'on_message')
     except Exception as e:
-        time_string = time.strftime("%H:%M:%S", time.localtime())  # strip using time
+        time_string = dailypost.get_timeformatted()
         traceback.print_exc()
         print("[%s] Exception: %s" % (time_string, (str(e))))
 #setup

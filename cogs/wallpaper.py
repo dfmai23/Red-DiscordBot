@@ -6,6 +6,7 @@ import os
 import json
 import sqlite3
 import pprint
+import copy
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import time
@@ -28,7 +29,8 @@ default_cfg = {
 
 config_path = 'data\wallpaper\\'
 config_file = 'config.json'
-dbread_path = 'data\wallpaper\\'
+# dbread_path = 'data\wallpaper\\'
+dbread_path = 'D:\Windows\AppData\Roaming\WallpaperMasterPro\\'
 dbread_file = 'WallpaperMaster.db3'
 dbwrite_path = 'data\Wallpaper\\'
 dbwrite_file = 'WallpaperBot.db3'
@@ -52,6 +54,19 @@ class Wallpaper:
         self.server_settings[server.id]["CHANNEL_NAME"] = channel.name
         self.save_config()
         await self.bot.say("Assigned channel: %s to post daily wallpapers!~" % channel.name)
+
+    @checks.mod_or_permissions(administrator=True)
+    @commands.command(pass_context=True)
+    async def set_time(self, ctx, tm):
+        """ Set the channel to schedule posts to """
+        server = ctx.message.server
+        oldtime = self.server_settings[server.id]["TIME_POST"]
+        self.server_settings[server.id]["TIME_POST"] = tm
+        newtime = self.server_settings[server.id]["TIME_POST"]
+        print('old time: %s     new time: %s' % (oldtime, newtime))
+
+        self.save_config()
+        await self.bot.say("Assigned time: %s to post daily wallpapers!~" % str(newtime))
 
     @commands.command(pass_context=True)
     async def add_cats(self, ctx, *cats):
@@ -163,7 +178,7 @@ class Wallpaper:
                 # print(str(type(row[0])))
                 cat_display += row[0] + '\n'
 
-            await self.bot.say('The following categories are!~: ' + box(cat_display), delete_after=60)
+            await self.bot.say('The following categories are selected!~: ' + box(cat_display), delete_after=60)
             conn.close()
             return
         else:
@@ -303,7 +318,7 @@ class Wallpaper:
 
             filepath = row[2] + '\\' + row[3]
             print('filepath: ' + filepath)
-            # await self.bot.send_file(channel, filepath)
+            await self.bot.send_file(channel, filepath)
             print('posted image: ' + filepath)
 
             # close connections
@@ -388,6 +403,8 @@ class Wallpaper:
         json.dump(self.settings, cfg_file, indent=4)
         print('Saving WallpaperBot config')
 
+    def get_timeformatted(self):
+        return time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime())
 
     """————————————————————WATCHERS————————————————————"""
     async def shutdown_watcher(self, message):  #catch at message before it actually does anything
@@ -396,13 +413,13 @@ class Wallpaper:
         message.content in [prefix + 'restart' for prefix in prefixes]):
             for server in self.bot.servers:
                 print('saving wallpaper settings and categories:', server.id, server.name)
-            #self.save_config()
+            self.save_config()
             return
 
 
     """————————————————————INIT————————————————————"""
     def init_settings(self):
-        print('--------------------Wallpaper--------------------')
+        print('[%s]----------Wallpaper--------------------' % self.get_timeformatted())
         print('Loading WallpaperBot settings')
         fullpath = config_path + config_file
         if not os.path.isdir(config_path):  #check directory
@@ -426,7 +443,7 @@ class Wallpaper:
         for server in self.bot.servers:
             if not server.id in self.server_settings:   #create new default server settings
                 print(' Server settings for %s %s not found, creating defaults' % (server.id, server.name))
-                self.server_settings[server.id] = default_server_cfg
+                self.server_settings[server.id] = copy.deepcopy(default_server_cfg)
                 self.server_settings[server.id]["server_name"] = server.name
         self.save_config()
 
@@ -435,10 +452,10 @@ class Wallpaper:
         scheduler = AsyncIOScheduler()
         for server in self.bot.servers:
             print("scheduling server: %s %s" % (server.id, server.name))
-            # post_time = self.server_settings[server.id]["TIME_POST"]
-            # time= datetime.datetime.strptime(post_time, '%H:%M') #strip using datetime
-            # scheduler.add_job(self.post_auto, 'cron', [server], hour=time.hour, minute=time.minute)
-            scheduler.add_job(self.post_auto, 'interval', [server], seconds=10) #for testing
+            post_time = self.server_settings[server.id]["TIME_POST"]
+            time= datetime.datetime.strptime(post_time, '%H:%M') #strip using datetime
+            scheduler.add_job(self.post_auto, 'cron', [server], hour=time.hour, minute=time.minute)
+            # scheduler.add_job(self.post_auto, 'interval', [server], seconds=10) #for testing
         scheduler.start()
 
 
@@ -448,10 +465,10 @@ def setup(bot):
 
     try:
         wp.init_settings()
-        # bot.loop.create_task(wp.init_scheduler())
+        bot.loop.create_task(wp.init_scheduler())
         bot.add_listener(wp.shutdown_watcher, 'on_message')
     except Exception as e:
-        time_string = time.strftime("%H:%M:%S", time.localtime())  # strip using time
+        time_string = wp.get_timeformatted()
         traceback.print_exc()
         print("[%s] Exception: %s" % (time_string, (str(e))))
 #setup

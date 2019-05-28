@@ -14,6 +14,9 @@ import xml.etree.ElementTree as etree
 import xml.dom.minidom
 import re           #re.compile() and pattern matching
 import youtube_dl
+import copy
+import traceback
+import time
 
 from tinytag import TinyTag as TTag
 from .utils.chat_formatting import *
@@ -764,7 +767,10 @@ class Music_Player:
     def save_config(self):      #save config for current server
         config_file = open(config_path, 'w')
         json.dump(self.settings, config_file, indent=4) #in:self.settings, out:config_file
-        print('Saving config for servers')
+        print('saving music player config for servers')
+
+    def get_timeformatted(self):
+        return time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime())
 
 
     """————————————————————Watchers————————————————————"""
@@ -779,11 +785,17 @@ class Music_Player:
                     print('saving music player settings and playlist:', server.id, server.name)
                     pl = self.playlists[server.id]
                     pl.save(default_playlist, server, overwrite=1)
-                    self.mp_stop(server)
-                except:
+                    try:
+                        print('  attempting to stop music player')
+                        self.mp_stop(server)
+                    except:
+                        print('  Music playing already stopped!')
+                        pass
+                except Exception as e:
+                    traceback.print_exc()
                     print('couldn\'t save music player settings:', server.id, server.name)
                     pass
-            # self.save_config()
+            self.save_config()
             return
 
     #basically asynchronously polls music player to see if its playing or not
@@ -837,7 +849,7 @@ class Music_Player:
 
     """————————————————————MP Initialization's————————————————————"""
     def init_settings(self):
-        print('--------------------Media Player--------------------')
+        print('[%s]----------Media Player--------------------' % self.get_timeformatted())
         print('Loading music player settings')
         self.settings = json.load(open(config_path, 'r'))
         self.server_settings = self.settings["SERVER_SETTINGS"]
@@ -847,7 +859,7 @@ class Music_Player:
         for server in self.bot.servers:
             if not server.id in self.server_settings:   #create new default server settings
                 print(' Server settings for %s %s not found, creating defaults' % (server.id, server.name))
-                self.server_settings[server.id] = default_server_cfg
+                self.server_settings[server.id] = copy.deepcopy(default_server_cfg)
                 self.server_settings[server.id]["server_name"] = server.name
         self.save_config()
 

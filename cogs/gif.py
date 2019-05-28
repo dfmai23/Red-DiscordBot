@@ -8,6 +8,7 @@ import time
 import urllib.request
 import re
 import pprint
+import copy
 
 from .utils.chat_formatting import *
 from .utils import checks
@@ -185,6 +186,8 @@ class GIF:
         json.dump(self.settings, cfg_file, indent=4) #in:self.settings, out:file
         print('Saving GIFBot config')
 
+    def get_timeformatted(self):
+        return time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime())
 
     """————————————————————WATCHERS————————————————————"""
     async def shutdown_watcher(self, message):  #catch at message before it actually does anything
@@ -193,13 +196,13 @@ class GIF:
         message.content in [prefix + 'restart' for prefix in prefixes]):
             for server in self.bot.servers:
                 print('saving gif bot settings:', server.id, server.name)
-            #self.save_config()
+            self.save_config()
             return
 
 
     """————————————————————INIT————————————————————"""
     def init_settings(self):
-        print('--------------------GIF Bot--------------------')
+        print('[%s]----------GIF Bot--------------------' % self.get_timeformatted())
         print('Loading GIFBot ettings')
         fullpath = config_path + config_file
         if not os.path.isdir(config_path):  #check directory
@@ -226,7 +229,7 @@ class GIF:
             #     os.makedirs(config_path + server.id)
             if not server.id in self.server_settings:   #create new default server settings
                 print('  Server settings for %s %s not found, creating defaults' % (server.id, server.name))
-                self.server_settings[server.id] = default_server_cfg
+                self.server_settings[server.id] = copy.deepcopy(default_server_cfg)
                 self.server_settings[server.id]["server_name"] = server.name
         self.save_config()
 
@@ -239,7 +242,7 @@ def setup(bot):
         gif.init_settings()
         bot.add_listener(gif.shutdown_watcher, 'on_message')
     except Exception as e:
-        time_string = time.strftime("%H:%M:%S", time.localtime())  # strip using time
+        time_string = gif.get_timeformatted()  # strip using time
         traceback.print_exc()
         print("[%s] Exception: %s" % (time_string, (str(e))))
 # setup

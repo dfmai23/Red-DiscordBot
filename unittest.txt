@@ -22,7 +22,7 @@ copyright
 
 dailypost
 ————————————————————————————————————————————————————————————————————————————————————————————————————
-`set_post 266047323166081024 test hello there
+`add_post 266047323166081024 test daily hello there
 
 
 gif
@@ -36,6 +36,8 @@ https://zippy.gfycat.com/OilyGrimyCobra.webm
 https://i.imgur.com/6n9fHDw.gif
 https://i.imgur.com/5k5X7Sr.gifv
 https://i.imgur.com/5k5X7Sr.mp4
+https://giant.gfycat.com/UnlinedApprehensiveHarpyeagle.webm
+https://i.redd.it/bt7suru8mmt21.gif
 
 channel dev
 266047323166081024

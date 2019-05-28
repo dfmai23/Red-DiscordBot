@@ -170,6 +170,8 @@ class Chat:
         f.close()
         return trained
 
+    def get_timeformatted(self):
+        return time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime())
 
     """————————————————————Initializations————————————————————"""
     def init_chat(self):
@@ -221,13 +223,12 @@ class Chat:
             f.close()
 
     async def init_chatbot(self):
-        print('--------------------Chat Bot--------------------')
+        print('[%s]----------Chat Bot--------------------' % self.get_timeformatted())
         self.chatbot = ChatBot(
         'Greedie_Bot',
-        # storage_adapter='chatterbot.storage.SQLStorageAdapter', #sql is defualt
-        # database='db.sqlite3',
+        storage_adapter='chatterbot.storage.SQLStorageAdapter', #sql is defualt
+        database='data/chat/chatdb.sqlite3',
         logic_adapters=["chatterbot.logic.BestMatch"])
-
 
     async def init_training(self):
         trained = self.check_trained()
