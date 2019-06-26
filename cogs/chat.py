@@ -127,15 +127,19 @@ class Chat:
                 print(' ', key2, self.messages[key][key2])
 
     def parse(self, message):
-        print('--------------------Chatbot message--------------------')
-        time_string = time.strftime("%H:%M:%S", time.localtime())
-        pattern = re.compile(r'^<@\d*>')
-        content = re.sub(pattern, '', message.content)  #remove the ping @bot
+        time_string = self.get_timeformatted()
+        print('[%s]----------Chatbot Message--------------------' % time_string)
+        if '@everyone' in message.content:
+            print('contains @everyone, skipping message')
+            return
+
+        pattern= re.compile(r'^(<@\d*>|@everyone)')
+        content = re.sub(pattern, '', message.content)  #remove the ping @bot from message before parse
         reply = self.chatbot.get_response(content)
 
         print('message content: ' + message.content)
         print('editted content: ' + content)
-        print('['+time_string+']', message.content, '|', reply)
+        print('REPLY', message.content, '|', reply)
         return reply
 
     def parse2(self, server, message):  #from txt file

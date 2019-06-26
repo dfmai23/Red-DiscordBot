@@ -279,8 +279,7 @@ class Wallpaper:
         channel_id = self.server_settings[server.id]["CHANNEL"]
         channel = server.get_channel(channel_id)
 
-        time_string = time.strftime("%H:%M:%S", time.localtime())
-        print("[%s]----------AUTO WP POST--------------------" % time_string)
+        print("[%s]----------AUTO WP POST--------------------" % self.get_timeformatted())
         print("posting to:")
         print("server:  %s   name: %s" % (server.id, server.name))
         print("channel: %s   name: %s" % (channel.id, channel.name))
