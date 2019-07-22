@@ -205,7 +205,7 @@ class Wallpaper:
 	    sql - get selected cats and respective id from db
 	    sql - get random row which is in one of the selected cats
 	    get the image location and post
-	    save the image location to writable db and mark as posted 
+	    save the image location to writable db and mark as posted
 	"""
     # @checks.mod_or_permissions(administrator=True)
     @commands.command(pass_context=True)
@@ -343,17 +343,17 @@ class Wallpaper:
 
     def get_read_image(self, csr_read, server_cats):
         # FIND categories WHERE IN to ones in json, pick random image in any category
-        sqlex = '''SELECT id, name 
-                    FROM main.CategoriesTbl 
-                    WHERE name in ({s}) 
+        sqlex = '''SELECT id, name
+                    FROM main.CategoriesTbl
+                    WHERE name in ({s})
                     ORDER BY sorting ASC;'''. \
                     format(s={', '.join('?' * len(server_cats))}). \
                     replace('{', '').replace('}', '').replace('\'', '')
 
-        sql_read = '''select wp.id, wp.CategoryId, wp.Path, wp.Filename, cats.name as CategoryName 
+        sql_read = '''select wp.id, wp.CategoryId, wp.Path, wp.Filename, cats.name as CategoryName
                     from main.WallpapersTbl wp
-                    inner join main.CategoriesTbl cats on cats.id = wp.CategoryId 
-                    where cats.name in ({s}) 
+                    inner join main.CategoriesTbl cats on cats.id = wp.CategoryId
+                    where cats.name in ({s})
                     order by random() limit 1';'''. \
                     format(s={', '.join('?' * len(server_cats))}). \
                     replace('{', '').replace('}', '').replace('\'', '')
@@ -370,7 +370,7 @@ class Wallpaper:
 
     def get_writeread_image(self, csr_write, row):  #db row from get_read_image, readDB
         #FIND image where EQUAL to one found in readDB
-        sql_writeread = '''select * from main.Posted 
+        sql_writeread = '''select * from main.Posted
                             where pid = (?)'''
 
         csr_write.execute(sql_writeread, (row[0],)) #exc requires it to be a sequence (x,)
